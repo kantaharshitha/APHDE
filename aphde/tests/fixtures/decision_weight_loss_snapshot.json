@@ -1,0 +1,121 @@
+﻿{
+  "alignment_score": 46.85,
+  "recommendations": [
+    {
+      "action": "Reduce daily calories by 150-200 kcal for 7 days.",
+      "category": "nutrition",
+      "confidence": 0.78,
+      "expected_effect": "Increases likelihood of negative weight trend.",
+      "id": "wl_nutrition_01",
+      "priority": 1,
+      "reason_codes": [
+        "STALL_RISK",
+        "COMPLIANCE_DROP",
+        "RECOVERY_DROP",
+        "VOLATILITY_SPIKE"
+      ]
+    },
+    {
+      "action": "Pre-log calories for the next 3 days and set a fixed intake range.",
+      "category": "habit",
+      "confidence": 0.84,
+      "expected_effect": "Improves adherence and restores deficit consistency.",
+      "id": "wl_compliance_01",
+      "priority": 2,
+      "reason_codes": [
+        "STALL_RISK",
+        "COMPLIANCE_DROP",
+        "RECOVERY_DROP",
+        "VOLATILITY_SPIKE"
+      ]
+    },
+    {
+      "action": "Reduce training volume by 10% for one week.",
+      "category": "recovery",
+      "confidence": 0.73,
+      "expected_effect": "Lowers fatigue and improves training adherence.",
+      "id": "wl_recovery_01",
+      "priority": 3,
+      "reason_codes": [
+        "STALL_RISK",
+        "COMPLIANCE_DROP",
+        "RECOVERY_DROP",
+        "VOLATILITY_SPIKE"
+      ]
+    }
+  ],
+  "risk_score": 53.15,
+  "trace": {
+    "computed_signals": {
+      "compliance_ratio": 0.55,
+      "muscle_balance_index": 0.6,
+      "progressive_overload_score": 0.52,
+      "recovery_index": 0.4,
+      "sufficiency": {
+        "compliance_ratio": true,
+        "muscle_balance_index": true,
+        "progressive_overload_score": true,
+        "recovery_index": true,
+        "trend_slope": true,
+        "volatility_index": true
+      },
+      "trend_slope": 0.02,
+      "volatility_index": 0.11
+    },
+    "confidence_notes": [],
+    "engine_version": "v1",
+    "goal_strategy_applied": "weight_loss",
+    "input_summary": {
+      "goal_type": "weight_loss",
+      "user_id": 1
+    },
+    "recommendation_ranking_trace": [
+      {
+        "confidence": 0.78,
+        "id": "wl_nutrition_01",
+        "priority": 1,
+        "reason_codes": [
+          "STALL_RISK",
+          "COMPLIANCE_DROP",
+          "RECOVERY_DROP",
+          "VOLATILITY_SPIKE"
+        ]
+      },
+      {
+        "confidence": 0.84,
+        "id": "wl_compliance_01",
+        "priority": 2,
+        "reason_codes": [
+          "STALL_RISK",
+          "COMPLIANCE_DROP",
+          "RECOVERY_DROP",
+          "VOLATILITY_SPIKE"
+        ]
+      },
+      {
+        "confidence": 0.73,
+        "id": "wl_recovery_01",
+        "priority": 3,
+        "reason_codes": [
+          "STALL_RISK",
+          "COMPLIANCE_DROP",
+          "RECOVERY_DROP",
+          "VOLATILITY_SPIKE"
+        ]
+      }
+    ],
+    "score_breakdown": {
+      "goal_adherence_penalty": 15.697,
+      "recovery_risk_penalty": 8.97,
+      "risk_penalty": 24.0,
+      "stability_penalty": 4.485,
+      "uncertainty_penalty": 0.0
+    },
+    "triggered_rules": [
+      "COMPLIANCE_DROP",
+      "RECOVERY_DROP",
+      "STALL_RISK",
+      "VOLATILITY_SPIKE"
+    ]
+  }
+}

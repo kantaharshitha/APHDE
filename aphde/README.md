@@ -7,22 +7,35 @@ Adaptive Personal Health Decision Engine (APHDE) is a modular, deterministic hea
 ```bash
 cd aphde
 python -m venv .venv
-.venv\Scripts\activate
-pip install -e .[dev]
-python -m streamlit run app/main.py
+.venv\Scripts\python.exe -m pip install -e .[dev]
+.venv\Scripts\python.exe -m streamlit run app/main.py
 ```
 
-## Test
+## Tests
 
 ```bash
 cd aphde
-pytest
+.venv\Scripts\python.exe -m pytest
 ```
+
+## Demo Script
+
+```bash
+cd aphde
+.venv\Scripts\python.exe scripts\run_demo_scenarios.py
+```
+
+## Docs
+
+- Architecture notes: `docs/architecture.md`
+- Decision framework: `docs/decision-rules.md`
+- Demo walkthroughs: `docs/demo-scenarios.md`
 
 ## Current Scope
 
-This scaffold includes:
-- domain models and enums
-- SQLite schema and database helper
-- repository and engine module stubs
-- Streamlit app entrypoint
+- SQLite-backed log ingestion for weight, calories, workouts
+- Deterministic signal engine
+- Goal-adaptive strategy layer (4 strategies)
+- Decision engine with ranked recommendations
+- Explanation trace persistence
+- Streamlit workflow pages for goal setup, logging, and dashboard
