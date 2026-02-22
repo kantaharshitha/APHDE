@@ -1,7 +1,7 @@
 ﻿from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 class UserRepository:
@@ -9,7 +9,10 @@ class UserRepository:
         self.conn = conn
 
     def create(self) -> int:
-        cursor = self.conn.execute("INSERT INTO users (created_at) VALUES (?)", (datetime.utcnow().isoformat(),))
+        cursor = self.conn.execute(
+            "INSERT INTO users (created_at) VALUES (?)",
+            (datetime.now(UTC).isoformat(),),
+        )
         self.conn.commit()
         return int(cursor.lastrowid)
 

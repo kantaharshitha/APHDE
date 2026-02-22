@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 class DecisionRunRepository:
@@ -28,7 +28,7 @@ class DecisionRunRepository:
             (
                 user_id,
                 goal_id,
-                datetime.utcnow().isoformat(),
+                datetime.now(UTC).isoformat(),
                 alignment_score,
                 risk_score,
                 json.dumps(recommendations),

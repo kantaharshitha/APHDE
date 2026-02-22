@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 from core.models.enums import GoalType
 
@@ -19,7 +19,7 @@ class GoalRepository:
             INSERT INTO goals (user_id, goal_type, target_json, active_from, is_active, created_at)
             VALUES (?, ?, ?, ?, 1, ?)
             """,
-            (user_id, goal_type.value, json.dumps(target), today, datetime.utcnow().isoformat()),
+            (user_id, goal_type.value, json.dumps(target), today, datetime.now(UTC).isoformat()),
         )
         self.conn.commit()
         return int(cursor.lastrowid)
