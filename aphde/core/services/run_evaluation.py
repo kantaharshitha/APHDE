@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from core.data.db import get_connection
+from core.data.migrations.migrate_v2_confidence import run_migration
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.decision_repo import DecisionRunRepository
 from core.data.repositories.goal_repo import GoalRepository
@@ -39,6 +40,8 @@ def _history_from_decision_rows(rows: list[Any]) -> list[dict[str, Any]]:
 
 
 def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
+    # Ensure older local databases are upgraded before accessing V2 confidence fields.
+    run_migration(db_path)
     with get_connection(db_path) as conn:
         goal_repo = GoalRepository(conn)
         decision_repo = DecisionRunRepository(conn)
@@ -69,7 +72,9 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
         history = _history_from_decision_rows(recent_decisions)
         previous_alignment_confidence = None
         if recent_decisions:
-            previous_alignment_confidence = float(recent_decisions[0]["alignment_confidence"])
+            first_row = recent_decisions[0]
+            if "alignment_confidence" in first_row.keys():
+                previous_alignment_confidence = float(first_row["alignment_confidence"])
 
         result = run_decision_engine(
             strategy=strategy,
