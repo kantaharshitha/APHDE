@@ -1,14 +1,15 @@
-﻿# Decision Rules
+# Decision Rules
 
-## Pipeline
+## Pipeline (V3)
 
 1. Build `SignalBundle` from recent logs.
 2. Execute active goal strategy (`evaluate` + `recommend`).
-3. Apply cross-cutting risk rules.
-4. Rank recommendations by deterministic weighted score.
-5. Build score breakdown penalties and compute alignment/risk scores.
-6. Compute confidence outputs (alignment + recommendation-level).
-7. Build structured trace and persist decision run.
+3. Apply context modulation (if context input exists).
+4. Apply cross-cutting risk rules.
+5. Rank recommendations by deterministic weighted score.
+6. Build score breakdown and compute alignment/risk scores.
+7. Compute confidence outputs (alignment + recommendation-level).
+8. Build trace payload and persist decision run.
 
 ## Cross-Cutting Risk Rules
 
@@ -17,6 +18,32 @@ Implemented in `core/decision/rules.py`:
 - `COMPLIANCE_DROP` when `compliance_ratio < 0.65`
 - `VOLATILITY_SPIKE` when `volatility_index > 0.10`
 - `STALL_RISK` when `progressive_overload_score < 0.50`
+
+## Context Modulation Rules (Cycle Plugin)
+
+Implemented in `core/context/cycle_context.py`.
+
+Supported phases:
+- `menstrual`
+- `follicular`
+- `ovulatory`
+- `luteal`
+
+Current deterministic modulation:
+- `luteal`
+- widen `max_volatility` by `+15%` (bounded)
+- soften `min_recovery` by `-0.03` (bounded)
+- apply `priority_score_scale = 0.95`
+- `menstrual`
+- soften `min_recovery` by `-0.05` (bounded)
+- apply `priority_score_scale = 0.95`
+- `follicular` / `ovulatory`
+- currently no threshold shifts
+
+Guardrails:
+- No raw signal mutation.
+- No rule suppression.
+- Unsupported context type is ignored with trace note.
 
 ## Recommendation Ranking
 
@@ -68,23 +95,19 @@ Components (weighted, bounded):
 - window sufficiency
 
 Smoothing:
-- Optional deterministic smoothing with prior confidence:
-- `C = clamp(alpha * C_prev + (1-alpha) * C_raw, 0, 1)`
+- `C = clamp(alpha * C_prev + (1 - alpha) * C_raw, 0, 1)`
 
 ## Explainability Contract
 
 Each decision run stores:
-- input summary (counts + active goal)
-- computed signal values + sufficiency map + deviations
-- applied strategy name
+- input summary
+- computed signals + sufficiency + deviations
+- strategy name
 - triggered rules
 - score breakdown
 - recommendation ranking trace
-- confidence notes
-- alignment confidence
-- recommendation confidence
-- confidence breakdown
-- confidence version
-- engine version
+- confidence outputs
+- context outputs (`context_applied`, `context_notes`, `context_version`, `context_json`)
+- version triad (`engine_version`, `confidence_version`, `context_version`)
 
-This supports deterministic replay and interview-grade reasoning audit.
+This supports deterministic replay and interview-grade reasoning audits.

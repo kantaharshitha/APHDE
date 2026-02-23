@@ -5,6 +5,7 @@ from pathlib import Path
 
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
+from core.data.repositories.context_repo import ContextInputRepository
 from core.data.repositories.decision_repo import DecisionRunRepository
 from core.data.repositories.goal_repo import GoalRepository
 from core.data.repositories.user_repo import UserRepository
@@ -36,7 +37,15 @@ def _print_latest(user_id: int, conn) -> None:
         f"alignment_conf={row['alignment_confidence']:.2f}"
     )
     print(f"confidence_version={row['confidence_version']}")
+    if "context_applied" in row.keys():
+        context_version = row["context_version"] if "context_version" in row.keys() else "ctx_v1"
+        print(
+            f"context_applied={bool(row['context_applied'])} "
+            f"context_version={context_version}"
+        )
     print(f"triggered_rules={trace.get('triggered_rules', [])}")
+    if trace.get("context_notes"):
+        print(f"context_notes={trace.get('context_notes')}")
     if recs:
         conf_map = {item["id"]: item["confidence"] for item in rec_conf}
         top_conf = conf_map.get(recs[0]["id"], "N/A")
@@ -57,6 +66,7 @@ def main() -> None:
         weight_repo = WeightLogRepository(conn)
         calorie_repo = CalorieLogRepository(conn)
         workout_repo = WorkoutLogRepository(conn)
+        context_repo = ContextInputRepository(conn)
 
         user_id = user_repo.create()
 
@@ -95,6 +105,27 @@ def main() -> None:
             weight_repo.add(user_id, d, 79.0 + 0.02 * idx)
         run_evaluation(user_id, str(db_path))
         print("Scenario 3: Strength Gain Fatigue")
+        _print_latest(user_id, conn)
+
+        # Scenario 4: same data, compare no-context vs luteal context
+        goal_repo.set_active_goal(user_id, GoalType.WEIGHT_LOSS, {})
+        for idx, d in enumerate(_seed_range(7)):
+            weight_repo.add(user_id, d, 77.8 + (0.05 * idx))
+            calorie_repo.add(user_id, d, 2350, 125)
+            workout_repo.add(user_id, d, "upper", 52, 5050 + idx * 40, 8.0, True, True)
+
+        run_evaluation(user_id, str(db_path))
+        print("Scenario 4A: Weight Loss without Context")
+        _print_latest(user_id, conn)
+
+        context_repo.add(
+            user_id=user_id,
+            log_date=date.today(),
+            context_type="cycle",
+            payload={"phase": "luteal", "source": "demo_script"},
+        )
+        run_evaluation(user_id, str(db_path))
+        print("Scenario 4B: Weight Loss with Luteal Context")
         _print_latest(user_id, conn)
 
 
