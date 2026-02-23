@@ -8,6 +8,7 @@ from app.utils import DB_PATH, bootstrap_db_and_user
 from core.data.db import get_connection
 from core.data.repositories.decision_repo import DecisionRunRepository
 from core.services.run_evaluation import run_evaluation
+from domains.health.domain_definition import HealthDomainDefinition
 
 
 st.title("Decision Dashboard")
@@ -42,7 +43,11 @@ with col1:
 
 if run_button:
     try:
-        decision_id = run_evaluation(user_id=user_id, db_path=str(DB_PATH))
+        decision_id = run_evaluation(
+            user_id=user_id,
+            db_path=str(DB_PATH),
+            domain_definition=HealthDomainDefinition(),
+        )
         st.success(f"Evaluation complete. decision_id={decision_id}")
     except ValueError as exc:
         st.error(str(exc))

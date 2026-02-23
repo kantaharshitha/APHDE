@@ -14,7 +14,6 @@ from core.data.repositories.weight_repo import WeightLogRepository
 from core.data.repositories.workout_repo import WorkoutLogRepository
 from core.engine.contracts import DomainDefinition, DomainLogs, validate_domain_definition
 from core.decision.engine import run_decision_engine
-from domains.health.domain_definition import HealthDomainDefinition
 
 
 def _row_to_dicts(rows: list[Any]) -> list[dict[str, Any]]:
@@ -48,7 +47,9 @@ def run_evaluation(
     # Ensure older local databases are upgraded before accessing V2 confidence fields.
     run_migration(db_path)
     run_context_migration(db_path)
-    domain = validate_domain_definition(domain_definition or HealthDomainDefinition())
+    if domain_definition is None:
+        raise ValueError("domain_definition is required")
+    domain = validate_domain_definition(domain_definition)
     with get_connection(db_path) as conn:
         goal_repo = GoalRepository(conn)
         decision_repo = DecisionRunRepository(conn)

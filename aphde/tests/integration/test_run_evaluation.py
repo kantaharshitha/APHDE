@@ -14,6 +14,13 @@ from core.models.enums import GoalType
 from domains.health.domain_definition import HealthDomainDefinition
 from core.services.run_evaluation import run_evaluation
 
+def _run_eval(user_id: int, db_path: str) -> int:
+    return run_evaluation(
+        user_id=user_id,
+        db_path=db_path,
+        domain_definition=HealthDomainDefinition(),
+    )
+
 
 def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     db_path = tmp_path / "eval.db"
@@ -36,7 +43,7 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
         workout_repo.add(user_id, today, "upper", 55, 5100.0, 8.2)
         workout_repo.add(user_id, today, "lower", 60, 5300.0, 8.4)
 
-    decision_id = run_evaluation(user_id=user_id, db_path=str(db_path))
+    decision_id = _run_eval(user_id=user_id, db_path=str(db_path))
     assert decision_id > 0
 
     with get_connection(db_path) as conn:
@@ -90,8 +97,8 @@ def test_run_evaluation_uses_previous_confidence_for_smoothing(tmp_path) -> None
             calorie_repo.add(user_id, today, 2400, 120)
             workout_repo.add(user_id, today, "upper", 50, 5000 + 50 * i, 8.1, True, True)
 
-    first_id = run_evaluation(user_id=user_id, db_path=str(db_path))
-    second_id = run_evaluation(user_id=user_id, db_path=str(db_path))
+    first_id = _run_eval(user_id=user_id, db_path=str(db_path))
+    second_id = _run_eval(user_id=user_id, db_path=str(db_path))
     assert second_id > first_id
 
     with get_connection(db_path) as conn:
@@ -130,7 +137,7 @@ def test_run_evaluation_persists_and_traces_cycle_context(tmp_path) -> None:
             payload={"phase": "luteal", "source": "integration_test"},
         )
 
-    decision_id = run_evaluation(user_id=user_id, db_path=str(db_path))
+    decision_id = _run_eval(user_id=user_id, db_path=str(db_path))
     assert decision_id > 0
 
     with get_connection(db_path) as conn:
@@ -183,8 +190,8 @@ def test_run_evaluation_is_stable_across_repeated_runs_with_same_context(tmp_pat
             payload={"phase": "luteal", "source": "integration_test"},
         )
 
-    first_id = run_evaluation(user_id=user_id, db_path=str(db_path))
-    second_id = run_evaluation(user_id=user_id, db_path=str(db_path))
+    first_id = _run_eval(user_id=user_id, db_path=str(db_path))
+    second_id = _run_eval(user_id=user_id, db_path=str(db_path))
     assert second_id > first_id
 
     with get_connection(db_path) as conn:
@@ -264,3 +271,63 @@ def test_run_evaluation_accepts_injected_domain_definition(tmp_path) -> None:
     trace = json.loads(latest["trace_json"])
     assert trace["domain_name"] == "custom_health"
     assert trace["domain_version"] == "custom_health_v1"
+
+
+def test_run_evaluation_default_and_explicit_health_domain_have_parity(tmp_path) -> None:
+    default_db_path = tmp_path / "eval_default_domain.db"
+    explicit_db_path = tmp_path / "eval_explicit_domain.db"
+    init_db(default_db_path)
+    init_db(explicit_db_path)
+
+    def seed(db_path) -> int:
+        with get_connection(db_path) as conn:
+            user_repo = UserRepository(conn)
+            goal_repo = GoalRepository(conn)
+            weight_repo = WeightLogRepository(conn)
+            calorie_repo = CalorieLogRepository(conn)
+            workout_repo = WorkoutLogRepository(conn)
+            context_repo = ContextInputRepository(conn)
+
+            user_id = user_repo.create()
+            goal_repo.set_active_goal(user_id, GoalType.WEIGHT_LOSS, {})
+            today = date.today()
+            for i in range(7):
+                weight_repo.add(user_id, today, 78.0 + (0.03 * i))
+                calorie_repo.add(user_id, today, 2400, 120)
+                workout_repo.add(user_id, today, "upper", 50, 5000 + 50 * i, 8.1, True, True)
+            context_repo.add(
+                user_id=user_id,
+                log_date=today,
+                context_type="cycle",
+                payload={"phase": "luteal", "source": "parity_test"},
+            )
+            return user_id
+
+    user_default = seed(default_db_path)
+    user_explicit = seed(explicit_db_path)
+
+    _run_eval(user_id=user_default, db_path=str(default_db_path))
+    run_evaluation(
+        user_id=user_explicit,
+        db_path=str(explicit_db_path),
+        domain_definition=HealthDomainDefinition(),
+    )
+
+    with get_connection(default_db_path) as conn:
+        default_row = DecisionRunRepository(conn).latest(user_default)
+    with get_connection(explicit_db_path) as conn:
+        explicit_row = DecisionRunRepository(conn).latest(user_explicit)
+
+    assert default_row is not None and explicit_row is not None
+    assert default_row["alignment_score"] == explicit_row["alignment_score"]
+    assert default_row["risk_score"] == explicit_row["risk_score"]
+    assert default_row["alignment_confidence"] == explicit_row["alignment_confidence"]
+    assert default_row["recommendations_json"] == explicit_row["recommendations_json"]
+    assert default_row["recommendation_confidence_json"] == explicit_row["recommendation_confidence_json"]
+    assert default_row["confidence_breakdown_json"] == explicit_row["confidence_breakdown_json"]
+    assert default_row["context_applied"] == explicit_row["context_applied"]
+    assert default_row["context_version"] == explicit_row["context_version"]
+    assert default_row["context_json"] == explicit_row["context_json"]
+    assert default_row["trace_json"] == explicit_row["trace_json"]
+
+

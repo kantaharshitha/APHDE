@@ -1,8 +1,9 @@
 # APHDE
 
-Adaptive Personal Health Decision Engine (APHDE) is a modular, deterministic health decision framework.
+Adaptive Personal Health Decision Engine (APHDE) is a deterministic, modular, explainable decision framework.
 
-V3 adds a Context Engine layer (cycle-aware first plugin) while preserving deterministic scoring and explainability.
+As of V4, APHDE is structured as a domain-agnostic core with pluggable domain implementations.
+The health domain is the reference implementation under `domains/health/`.
 
 ## Quickstart
 
@@ -20,6 +21,13 @@ cd aphde
 .venv\Scripts\python.exe -m pytest
 ```
 
+## Architecture Boundary Check
+
+```bash
+cd aphde
+.venv\Scripts\python.exe scripts\check_architecture_boundaries.py
+```
+
 ## Demo Script
 
 ```bash
@@ -30,44 +38,42 @@ cd aphde
 ## Docs
 
 - Architecture: `docs/architecture.md`
+- Domain contract: `docs/domain-definition.md`
 - Decision framework: `docs/decision-rules.md`
 - Confidence model: `docs/confidence-model.md`
 - Context engine: `docs/context-engine.md`
 - Demo walkthroughs: `docs/demo-scenarios.md`
+- V4 release notes: `docs/release-notes-v4.md`
 
 ## Current Scope
 
-- SQLite-backed log ingestion for weight, calories, workouts
-- Deterministic signal engine
-- Goal-adaptive strategy layer (4 strategies)
-- Context engine (cycle context in V3)
-- Decision engine with ranked recommendations
-- Composite scoring (`alignment_score`, `risk_score`)
-- Deterministic confidence modeling (`alignment_confidence`, per-rec confidence)
-- Deterministic context modulation (`context_applied`, `context_version`, `context_json`)
-- Explanation trace persistence (versioned)
-- Streamlit workflow pages for goal setup, logging, and dashboard
+- Deterministic core engine orchestration (`core/engine`)
+- Deterministic scoring + confidence + context pipelines
+- SQLite-backed persistence + traceability
+- Version triad per run:
+  - `engine_version`
+  - `confidence_version`
+  - `context_version`
+- Health domain implementation via `DomainDefinition`:
+  - `domains/health/domain_definition.py`
+  - health signals + strategies + thresholds
+- Streamlit UI for goal setup, logging, and dashboard
 
-## V3 UI Flow
+## V4 Composition Model
 
-1. `Goal Setup` page
-- Choose optimization goal and target thresholds.
-2. `Log Input` page
-- Add weight, calories, and workouts (tile/card selector for workout type).
-- Add optional cycle context input (phase, cycle day, symptom load).
-3. `Decision Dashboard` page
-- Run evaluation.
-- Inspect alignment/risk/confidence plus context diagnostics and modulation details.
+`core/services/run_evaluation.py` requires an injected `DomainDefinition`.
 
-## Run V3 Quickly
+Example:
 
-```bash
-cd aphde
-.venv\Scripts\python.exe -m streamlit run app/main.py
+```python
+from core.services.run_evaluation import run_evaluation
+from domains.health.domain_definition import HealthDomainDefinition
+
+run_evaluation(
+    user_id=1,
+    db_path="aphde.db",
+    domain_definition=HealthDomainDefinition(),
+)
 ```
 
-In the app:
-1. Set a goal.
-2. Log at least 7 days of workouts/weight.
-3. Save cycle context with phase `luteal`.
-4. Run evaluation and compare dashboard output with and without context.
+This keeps core runtime decoupled from domain-specific behavior.

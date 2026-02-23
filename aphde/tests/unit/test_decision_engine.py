@@ -93,3 +93,46 @@ def test_run_decision_engine_applies_context_without_mutating_signals() -> None:
         signals.progressive_overload_score,
         signals.sufficiency,
     ) == original_signals
+
+
+def test_run_decision_engine_is_repeatable_for_identical_inputs() -> None:
+    strategy = StrategyFactory.create(GoalType.WEIGHT_LOSS)
+    signals = SignalBundle(
+        trend_slope=0.02,
+        volatility_index=0.11,
+        compliance_ratio=0.55,
+        muscle_balance_index=0.6,
+        recovery_index=0.4,
+        progressive_overload_score=0.52,
+        sufficiency={
+            "trend_slope": True,
+            "volatility_index": True,
+            "compliance_ratio": True,
+            "muscle_balance_index": True,
+            "recovery_index": True,
+            "progressive_overload_score": True,
+        },
+    )
+
+    result_a = run_decision_engine(
+        strategy=strategy,
+        signals=signals,
+        target={},
+        input_summary={"user_id": 1, "goal_type": "weight_loss"},
+        context_input={"phase": "luteal"},
+    )
+    result_b = run_decision_engine(
+        strategy=strategy,
+        signals=signals,
+        target={},
+        input_summary={"user_id": 1, "goal_type": "weight_loss"},
+        context_input={"phase": "luteal"},
+    )
+
+    assert result_a.alignment_score == result_b.alignment_score
+    assert result_a.risk_score == result_b.risk_score
+    assert result_a.recommendations == result_b.recommendations
+    assert result_a.alignment_confidence == result_b.alignment_confidence
+    assert result_a.recommendation_confidence == result_b.recommendation_confidence
+    assert result_a.confidence_breakdown == result_b.confidence_breakdown
+    assert result_a.trace == result_b.trace

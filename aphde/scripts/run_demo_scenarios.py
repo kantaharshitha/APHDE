@@ -13,6 +13,7 @@ from core.data.repositories.weight_repo import WeightLogRepository
 from core.data.repositories.workout_repo import WorkoutLogRepository
 from core.models.enums import GoalType
 from core.services.run_evaluation import run_evaluation
+from domains.health.domain_definition import HealthDomainDefinition
 
 
 def _seed_range(n_days: int) -> list[date]:
@@ -59,6 +60,7 @@ def _print_latest(user_id: int, conn) -> None:
 def main() -> None:
     db_path = Path(__file__).resolve().parents[1] / "aphde.db"
     init_db(db_path)
+    domain = HealthDomainDefinition()
 
     with get_connection(db_path) as conn:
         user_repo = UserRepository(conn)
@@ -85,7 +87,7 @@ def main() -> None:
                 planned_flag=True,
                 completed_flag=False if idx % 4 == 0 else True,
             )
-        run_evaluation(user_id, str(db_path))
+        run_evaluation(user_id, str(db_path), domain_definition=domain)
         print("Scenario 1: Weight Loss Drift + Low Adherence")
         _print_latest(user_id, conn)
 
@@ -94,7 +96,7 @@ def main() -> None:
         for idx, d in enumerate(_seed_range(8)):
             weight_repo.add(user_id, d, 78.5 + (0.01 * (-1) ** idx))
             workout_repo.add(user_id, d, "push", 55, 5200 + idx * 20, 7.6, True, True)
-        run_evaluation(user_id, str(db_path))
+        run_evaluation(user_id, str(db_path), domain_definition=domain)
         print("Scenario 2: Recomposition with Imbalance")
         _print_latest(user_id, conn)
 
@@ -103,7 +105,7 @@ def main() -> None:
         for idx, d in enumerate(_seed_range(9)):
             workout_repo.add(user_id, d, "lower", 70, 6000 + idx * 80, 8.8 if idx > 3 else 8.1, True, True)
             weight_repo.add(user_id, d, 79.0 + 0.02 * idx)
-        run_evaluation(user_id, str(db_path))
+        run_evaluation(user_id, str(db_path), domain_definition=domain)
         print("Scenario 3: Strength Gain Fatigue")
         _print_latest(user_id, conn)
 
@@ -114,7 +116,7 @@ def main() -> None:
             calorie_repo.add(user_id, d, 2350, 125)
             workout_repo.add(user_id, d, "upper", 52, 5050 + idx * 40, 8.0, True, True)
 
-        run_evaluation(user_id, str(db_path))
+        run_evaluation(user_id, str(db_path), domain_definition=domain)
         print("Scenario 4A: Weight Loss without Context")
         _print_latest(user_id, conn)
 
@@ -124,7 +126,7 @@ def main() -> None:
             context_type="cycle",
             payload={"phase": "luteal", "source": "demo_script"},
         )
-        run_evaluation(user_id, str(db_path))
+        run_evaluation(user_id, str(db_path), domain_definition=domain)
         print("Scenario 4B: Weight Loss with Luteal Context")
         _print_latest(user_id, conn)
 
