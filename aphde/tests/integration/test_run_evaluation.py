@@ -42,3 +42,9 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     assert latest is not None
     assert latest["alignment_score"] >= 0
     assert latest["risk_score"] >= 0
+    assert "alignment_confidence" in latest.keys()
+    assert "recommendation_confidence_json" in latest.keys()
+    assert "confidence_breakdown_json" in latest.keys()
+    assert "confidence_version" in latest.keys()
+    assert latest["alignment_confidence"] == 0.0
+    assert latest["confidence_version"] == "conf_v1"

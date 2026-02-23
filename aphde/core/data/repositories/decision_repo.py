@@ -17,13 +17,21 @@ class DecisionRunRepository:
         risk_score: float,
         recommendations: list[dict],
         trace: dict,
+        alignment_confidence: float = 0.0,
+        recommendation_confidence: list[dict] | None = None,
+        confidence_breakdown: dict | None = None,
+        confidence_version: str = "conf_v1",
         engine_version: str = "v1",
     ) -> int:
+        recommendation_confidence = recommendation_confidence or []
+        confidence_breakdown = confidence_breakdown or {}
         cursor = self.conn.execute(
             """
             INSERT INTO decision_runs (
-                user_id, goal_id, run_date, alignment_score, risk_score, recommendations_json, trace_json, engine_version
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                user_id, goal_id, run_date, alignment_score, risk_score, alignment_confidence,
+                recommendations_json, recommendation_confidence_json, confidence_breakdown_json,
+                confidence_version, trace_json, engine_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -31,7 +39,11 @@ class DecisionRunRepository:
                 datetime.now(UTC).isoformat(),
                 alignment_score,
                 risk_score,
+                alignment_confidence,
                 json.dumps(recommendations),
+                json.dumps(recommendation_confidence),
+                json.dumps(confidence_breakdown),
+                confidence_version,
                 json.dumps(trace),
                 engine_version,
             ),
