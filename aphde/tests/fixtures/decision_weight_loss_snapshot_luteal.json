@@ -1,0 +1,196 @@
+{
+  "alignment_score": 48.3,
+  "recommendations": [
+    {
+      "action": "Reduce daily calories by 150-200 kcal for 7 days.",
+      "category": "nutrition",
+      "confidence": 0.78,
+      "expected_effect": "Increases likelihood of negative weight trend.",
+      "id": "wl_nutrition_01",
+      "priority": 1,
+      "reason_codes": [
+        "STALL_RISK",
+        "COMPLIANCE_DROP",
+        "RECOVERY_DROP",
+        "VOLATILITY_SPIKE"
+      ]
+    },
+    {
+      "action": "Pre-log calories for the next 3 days and set a fixed intake range.",
+      "category": "habit",
+      "confidence": 0.84,
+      "expected_effect": "Improves adherence and restores deficit consistency.",
+      "id": "wl_compliance_01",
+      "priority": 2,
+      "reason_codes": [
+        "STALL_RISK",
+        "COMPLIANCE_DROP",
+        "RECOVERY_DROP",
+        "VOLATILITY_SPIKE"
+      ]
+    },
+    {
+      "action": "Reduce training volume by 10% for one week.",
+      "category": "recovery",
+      "confidence": 0.73,
+      "expected_effect": "Lowers fatigue and improves training adherence.",
+      "id": "wl_recovery_01",
+      "priority": 3,
+      "reason_codes": [
+        "STALL_RISK",
+        "COMPLIANCE_DROP",
+        "RECOVERY_DROP",
+        "VOLATILITY_SPIKE"
+      ]
+    }
+  ],
+  "risk_score": 51.7,
+  "trace": {
+    "alignment_confidence": 0.5167,
+    "computed_signals": {
+      "compliance_ratio": 0.55,
+      "deviations": {
+        "compliance_miss": true,
+        "recovery_miss": true,
+        "trend_miss": true,
+        "volatility_miss": true
+      },
+      "muscle_balance_index": 0.6,
+      "progressive_overload_score": 0.52,
+      "recovery_index": 0.4,
+      "sufficiency": {
+        "compliance_ratio": true,
+        "muscle_balance_index": true,
+        "progressive_overload_score": true,
+        "recovery_index": true,
+        "trend_slope": true,
+        "volatility_index": true
+      },
+      "trend_slope": 0.02,
+      "volatility_index": 0.11
+    },
+    "confidence_breakdown": {
+      "components": {
+        "data_completeness": 1.0,
+        "historical_persistence": 0.5,
+        "signal_stability": 0.0833,
+        "threshold_distance": 0.0,
+        "window_sufficiency": 1.0
+      },
+      "confidence_version": "conf_v1",
+      "smoothing": {
+        "alpha": 0.2,
+        "previous_used": false
+      },
+      "weights": {
+        "data_completeness": 0.3,
+        "historical_persistence": 0.2,
+        "signal_stability": 0.2,
+        "threshold_distance": 0.2,
+        "window_sufficiency": 0.1
+      }
+    },
+    "confidence_notes": [
+      "Lower confidence due to high volatility."
+    ],
+    "confidence_version": "conf_v1",
+    "context_applied": true,
+    "context_json": {
+      "metadata": {
+        "context_type": "cycle",
+        "goal_type": "weight_loss",
+        "phase": "luteal",
+        "score_inputs": {
+          "priority_score": 0.4485
+        }
+      },
+      "modulated_thresholds": {
+        "max_volatility": 0.092,
+        "min_recovery": 0.52
+      },
+      "penalty_scalars": {
+        "priority_score_scale": 0.95
+      },
+      "tolerance_adjustments": {
+        "max_volatility_delta": 0.012,
+        "min_recovery_delta": -0.03
+      }
+    },
+    "context_notes": [
+      "Luteal phase: widened volatility tolerance.",
+      "Luteal phase: slightly softened recovery expectation."
+    ],
+    "context_version": "ctx_v1",
+    "engine_version": "v1",
+    "goal_strategy_applied": "weight_loss",
+    "input_summary": {
+      "goal_type": "weight_loss",
+      "user_id": 1
+    },
+    "recommendation_confidence": [
+      {
+        "confidence": 0.8568,
+        "id": "wl_nutrition_01"
+      },
+      {
+        "confidence": 0.8688,
+        "id": "wl_compliance_01"
+      },
+      {
+        "confidence": 0.8468,
+        "id": "wl_recovery_01"
+      }
+    ],
+    "recommendation_ranking_trace": [
+      {
+        "computed_confidence": 0.8568,
+        "confidence": 0.78,
+        "id": "wl_nutrition_01",
+        "priority": 1,
+        "reason_codes": [
+          "STALL_RISK",
+          "COMPLIANCE_DROP",
+          "RECOVERY_DROP",
+          "VOLATILITY_SPIKE"
+        ]
+      },
+      {
+        "computed_confidence": 0.8688,
+        "confidence": 0.84,
+        "id": "wl_compliance_01",
+        "priority": 2,
+        "reason_codes": [
+          "STALL_RISK",
+          "COMPLIANCE_DROP",
+          "RECOVERY_DROP",
+          "VOLATILITY_SPIKE"
+        ]
+      },
+      {
+        "computed_confidence": 0.8468,
+        "confidence": 0.73,
+        "id": "wl_recovery_01",
+        "priority": 3,
+        "reason_codes": [
+          "STALL_RISK",
+          "COMPLIANCE_DROP",
+          "RECOVERY_DROP",
+          "VOLATILITY_SPIKE"
+        ]
+      }
+    ],
+    "score_breakdown": {
+      "goal_adherence_penalty": 14.913,
+      "recovery_risk_penalty": 8.521,
+      "risk_penalty": 24.0,
+      "stability_penalty": 4.261,
+      "uncertainty_penalty": 0.0
+    },
+    "triggered_rules": [
+      "COMPLIANCE_DROP",
+      "RECOVERY_DROP",
+      "STALL_RISK",
+      "VOLATILITY_SPIKE"
+    ]
+  }
+}
