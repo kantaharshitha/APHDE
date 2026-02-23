@@ -12,6 +12,29 @@ from core.services.run_evaluation import run_evaluation
 
 st.title("Decision Dashboard")
 user_id = bootstrap_db_and_user()
+st.markdown(
+    """
+    <style>
+    .ctx-box {
+        border: 1px solid #d9e3f0;
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+        background: #f8fbff;
+        margin-bottom: 0.75rem;
+    }
+    .ctx-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+    }
+    .ctx-item {
+        font-size: 0.85rem;
+        color: #2f4b67;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 col1, col2 = st.columns([1, 2])
 with col1:
@@ -36,13 +59,29 @@ trace = json.loads(latest["trace_json"])
 
 alignment_confidence = float(latest["alignment_confidence"]) if "alignment_confidence" in latest.keys() else 0.0
 confidence_version = latest["confidence_version"] if "confidence_version" in latest.keys() else "conf_v1"
+context_applied = bool(latest["context_applied"]) if "context_applied" in latest.keys() else bool(trace.get("context_applied", False))
+context_version = latest["context_version"] if "context_version" in latest.keys() else str(trace.get("context_version", "ctx_v1"))
+context_json = {}
+if "context_json" in latest.keys() and latest["context_json"]:
+    context_json = json.loads(latest["context_json"])
+elif isinstance(trace, dict):
+    context_json = trace.get("context_json", {}) or {}
+context_notes = trace.get("context_notes", []) if isinstance(trace, dict) else []
+context_meta = context_json.get("metadata", {}) if isinstance(context_json, dict) else {}
+context_type = context_meta.get("context_type", "none")
+context_phase = context_meta.get("phase", "n/a")
 
-metric1, metric2, metric3 = st.columns(3)
+metric1, metric2, metric3, metric4 = st.columns(4)
 metric1.metric("Alignment Score", f"{latest['alignment_score']:.2f}")
 metric2.metric("Risk Score", f"{latest['risk_score']:.2f}")
 metric3.metric("Alignment Confidence", f"{alignment_confidence:.2f}")
+metric4.metric("Context Applied", "Yes" if context_applied else "No")
 
-st.caption(f"Engine version: {latest['engine_version']} | Confidence version: {confidence_version}")
+st.caption(
+    f"Engine version: {latest['engine_version']} | "
+    f"Confidence version: {confidence_version} | "
+    f"Context version: {context_version}"
+)
 
 rec_conf_list = []
 if "recommendation_confidence_json" in latest.keys() and latest["recommendation_confidence_json"]:
@@ -77,6 +116,53 @@ if notes:
     st.subheader("Confidence Notes")
     for note in notes:
         st.write(f"- {note}")
+
+st.subheader("Context Engine")
+left, right = st.columns(2)
+with left:
+    st.markdown(
+        f"""
+        <div class="ctx-box">
+            <div class="ctx-title">Context Summary</div>
+            <div class="ctx-item">Type: <b>{context_type}</b></div>
+            <div class="ctx-item">Phase: <b>{context_phase}</b></div>
+            <div class="ctx-item">Applied: <b>{"yes" if context_applied else "no"}</b></div>
+            <div class="ctx-item">Version: <b>{context_version}</b></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+with right:
+    if context_notes:
+        st.markdown(
+            """
+            <div class="ctx-box">
+                <div class="ctx-title">Context Notes</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        for note in context_notes:
+            st.write(f"- {note}")
+    else:
+        st.write("Context notes: none")
+
+if context_json:
+    thresholds = context_json.get("modulated_thresholds", {}) if isinstance(context_json, dict) else {}
+    scalars = context_json.get("penalty_scalars", {}) if isinstance(context_json, dict) else {}
+    adjustments = context_json.get("tolerance_adjustments", {}) if isinstance(context_json, dict) else {}
+
+    st.caption("Context modulation details")
+    t1, t2, t3 = st.columns(3)
+    with t1:
+        st.markdown("**Modulated thresholds**")
+        st.json(thresholds)
+    with t2:
+        st.markdown("**Penalty scalars**")
+        st.json(scalars)
+    with t3:
+        st.markdown("**Tolerance adjustments**")
+        st.json(adjustments)
 
 st.subheader("Explanation Trace")
 st.json(trace)
