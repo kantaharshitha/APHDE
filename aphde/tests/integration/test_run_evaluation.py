@@ -1,6 +1,7 @@
 from datetime import date
 import json
 
+from core.engine.contracts import DomainLogs, SignalBundleLike, StrategyLike
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.context_repo import ContextInputRepository
@@ -10,6 +11,7 @@ from core.data.repositories.user_repo import UserRepository
 from core.data.repositories.weight_repo import WeightLogRepository
 from core.data.repositories.workout_repo import WorkoutLogRepository
 from core.models.enums import GoalType
+from domains.health.domain_definition import HealthDomainDefinition
 from core.services.run_evaluation import run_evaluation
 
 
@@ -60,6 +62,8 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     assert "recommendation_confidence" in trace
     assert "confidence_breakdown" in trace
     assert "confidence_version" in trace
+    assert trace["domain_name"] == "health"
+    assert trace["domain_version"] == "health_v1"
     recs = json.loads(latest["recommendations_json"])
     rec_ids = {item["id"] for item in recs}
     rec_conf_ids = {item["id"] for item in rec_conf}
@@ -201,3 +205,62 @@ def test_run_evaluation_is_stable_across_repeated_runs_with_same_context(tmp_pat
     assert latest_trace["confidence_breakdown"]["smoothing"]["previous_used"] is True
     assert previous_trace["confidence_breakdown"]["smoothing"]["previous_used"] is False
     assert latest["alignment_confidence"] >= previous["alignment_confidence"]
+
+
+class _CustomInjectedDomain:
+    def __init__(self) -> None:
+        self._delegate = HealthDomainDefinition()
+
+    def compute_signals(self, logs: DomainLogs, config: dict) -> SignalBundleLike:
+        return self._delegate.compute_signals(logs, config)
+
+    def get_strategy(self, goal_type: str) -> StrategyLike:
+        return self._delegate.get_strategy(goal_type)
+
+    def get_domain_config(self) -> dict:
+        return self._delegate.get_domain_config()
+
+    def normalize_goal_type(self, raw_goal_type: str) -> str:
+        return self._delegate.normalize_goal_type(raw_goal_type)
+
+    def domain_name(self) -> str:
+        return "custom_health"
+
+    def domain_version(self) -> str:
+        return "custom_health_v1"
+
+
+def test_run_evaluation_accepts_injected_domain_definition(tmp_path) -> None:
+    db_path = tmp_path / "eval_injected_domain.db"
+    init_db(db_path)
+
+    with get_connection(db_path) as conn:
+        user_repo = UserRepository(conn)
+        goal_repo = GoalRepository(conn)
+        weight_repo = WeightLogRepository(conn)
+        calorie_repo = CalorieLogRepository(conn)
+        workout_repo = WorkoutLogRepository(conn)
+
+        user_id = user_repo.create()
+        goal_repo.set_active_goal(user_id, GoalType.WEIGHT_LOSS, {})
+
+        today = date.today()
+        for i in range(7):
+            weight_repo.add(user_id, today, 78.0 + (0.03 * i))
+            calorie_repo.add(user_id, today, 2400, 120)
+            workout_repo.add(user_id, today, "upper", 50, 5000 + 50 * i, 8.1, True, True)
+
+    decision_id = run_evaluation(
+        user_id=user_id,
+        db_path=str(db_path),
+        domain_definition=_CustomInjectedDomain(),
+    )
+    assert decision_id > 0
+
+    with get_connection(db_path) as conn:
+        latest = DecisionRunRepository(conn).latest(user_id)
+
+    assert latest is not None
+    trace = json.loads(latest["trace_json"])
+    assert trace["domain_name"] == "custom_health"
+    assert trace["domain_version"] == "custom_health_v1"

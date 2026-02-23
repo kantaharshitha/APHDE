@@ -19,7 +19,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["core*"]
+include = ["core*", "domains*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

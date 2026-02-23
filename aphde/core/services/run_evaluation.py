@@ -12,10 +12,9 @@ from core.data.repositories.decision_repo import DecisionRunRepository
 from core.data.repositories.goal_repo import GoalRepository
 from core.data.repositories.weight_repo import WeightLogRepository
 from core.data.repositories.workout_repo import WorkoutLogRepository
+from core.engine.contracts import DomainDefinition, DomainLogs, validate_domain_definition
 from core.decision.engine import run_decision_engine
-from core.models.enums import GoalType
-from core.signals.aggregator import build_signal_bundle
-from core.strategies.factory import StrategyFactory
+from domains.health.domain_definition import HealthDomainDefinition
 
 
 def _row_to_dicts(rows: list[Any]) -> list[dict[str, Any]]:
@@ -41,10 +40,15 @@ def _history_from_decision_rows(rows: list[Any]) -> list[dict[str, Any]]:
     return history
 
 
-def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
+def run_evaluation(
+    user_id: int,
+    db_path: str = "aphde.db",
+    domain_definition: DomainDefinition | None = None,
+) -> int:
     # Ensure older local databases are upgraded before accessing V2 confidence fields.
     run_migration(db_path)
     run_context_migration(db_path)
+    domain = validate_domain_definition(domain_definition or HealthDomainDefinition())
     with get_connection(db_path) as conn:
         goal_repo = GoalRepository(conn)
         decision_repo = DecisionRunRepository(conn)
@@ -57,7 +61,7 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
         if goal is None:
             raise ValueError("No active goal found for user")
 
-        goal_type = GoalType(goal["goal_type"])
+        normalized_goal_type = domain.normalize_goal_type(str(goal["goal_type"]))
         target = json.loads(goal["target_json"]) if goal["target_json"] else {}
         context_input = None
         latest_context = context_repo.latest_for_user(user_id=user_id, context_type="cycle")
@@ -71,14 +75,19 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
         calorie_logs = _row_to_dicts(calorie_repo.list_recent(user_id, days=28))
         workout_logs = _row_to_dicts(workout_repo.list_recent(user_id, days=28))
 
-        weight_values = [float(row["weight_kg"]) for row in weight_logs]
-        signals = build_signal_bundle(
-            weight_values=weight_values,
-            workout_logs=workout_logs,
-            window_days=7,
+        signals = domain.compute_signals(
+            DomainLogs(
+                items={
+                    "weight_logs": weight_logs,
+                    "calorie_logs": calorie_logs,
+                    "workout_logs": workout_logs,
+                },
+                metadata={"user_id": user_id},
+            ),
+            config=domain.get_domain_config(),
         )
 
-        strategy = StrategyFactory.create(goal_type)
+        strategy = domain.get_strategy(normalized_goal_type)
         recent_decisions = decision_repo.list_recent(user_id=user_id, limit=10)
         history = _history_from_decision_rows(recent_decisions)
         previous_alignment_confidence = None
@@ -94,7 +103,7 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
             input_summary={
                 "user_id": user_id,
                 "goal_id": int(goal["id"]),
-                "goal_type": goal["goal_type"],
+                "goal_type": normalized_goal_type,
                 "weight_log_count": len(weight_logs),
                 "calorie_log_count": len(calorie_logs),
                 "workout_log_count": len(workout_logs),
@@ -103,6 +112,8 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
             previous_alignment_confidence=previous_alignment_confidence,
             context_input=context_input,
         )
+        result.trace["domain_name"] = domain.domain_name()
+        result.trace["domain_version"] = domain.domain_version()
 
         return decision_repo.create(
             user_id=user_id,
