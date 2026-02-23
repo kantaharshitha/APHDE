@@ -1,4 +1,4 @@
-﻿{
+{
   "alignment_score": 46.85,
   "recommendations": [
     {
@@ -62,7 +62,9 @@
       "trend_slope": 0.02,
       "volatility_index": 0.11
     },
-    "confidence_notes": [],
+    "confidence_notes": [
+      "Lower confidence due to high volatility."
+    ],
     "engine_version": "v1",
     "goal_strategy_applied": "weight_loss",
     "input_summary": {
@@ -71,6 +73,7 @@
     },
     "recommendation_ranking_trace": [
       {
+        "computed_confidence": 0.8568,
         "confidence": 0.78,
         "id": "wl_nutrition_01",
         "priority": 1,
@@ -82,6 +85,7 @@
         ]
       },
       {
+        "computed_confidence": 0.8688,
         "confidence": 0.84,
         "id": "wl_compliance_01",
         "priority": 2,
@@ -93,6 +97,7 @@
         ]
       },
       {
+        "computed_confidence": 0.8468,
         "confidence": 0.73,
         "id": "wl_recovery_01",
         "priority": 3,

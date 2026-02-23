@@ -7,6 +7,7 @@ from core.explain.serializers import recommendations_to_dicts
 from core.explain.trace_builder import build_trace
 from core.scoring.alignment import compute_alignment_score
 from core.scoring.breakdown import build_score_breakdown, penalties_from_breakdown
+from core.scoring.confidence import compute_confidence
 from core.signals.aggregator import SignalBundle
 from core.strategies.base import GoalStrategy
 
@@ -17,6 +18,10 @@ class DecisionResult:
     risk_score: float
     recommendations: list[dict[str, Any]]
     trace: dict[str, Any]
+    alignment_confidence: float = 0.0
+    recommendation_confidence: list[dict[str, Any]] | None = None
+    confidence_breakdown: dict[str, Any] | None = None
+    confidence_version: str = "conf_v1"
     engine_version: str = "v1"
 
 
@@ -26,6 +31,8 @@ def run_decision_engine(
     signals: SignalBundle,
     target: dict[str, Any],
     input_summary: dict[str, Any],
+    history: list[dict[str, Any]] | None = None,
+    previous_alignment_confidence: float | None = None,
     engine_version: str = "v1",
 ) -> DecisionResult:
     evaluation = strategy.evaluate(signals, target)
@@ -48,11 +55,29 @@ def run_decision_engine(
     risk_score = max(0.0, min(100.0, 100.0 - alignment))
 
     recommendation_dicts = recommendations_to_dicts(ranked)
+    available_days = max(
+        int(input_summary.get("weight_log_count", 0)),
+        int(input_summary.get("workout_log_count", 0)),
+        int(input_summary.get("calorie_log_count", 0)),
+        0,
+    )
+    confidence = compute_confidence(
+        signals=signals,
+        deviations=evaluation.get("deviations", {}),
+        recommendations=recommendation_dicts,
+        history=history,
+        threshold_distances=evaluation.get("threshold_distances"),
+        available_days=available_days if available_days > 0 else 7,
+        required_days=7,
+        previous_alignment_confidence=previous_alignment_confidence,
+    )
+    rec_conf_by_id = {item["id"]: item["confidence"] for item in confidence["recommendation_confidence"]}
     ranking_trace = [
         {
             "id": rec["id"],
             "priority": rec["priority"],
             "confidence": rec["confidence"],
+            "computed_confidence": rec_conf_by_id.get(rec["id"]),
             "reason_codes": rec["reason_codes"],
         }
         for rec in recommendation_dicts
@@ -63,6 +88,7 @@ def run_decision_engine(
         confidence_notes.append(f"{missing_signal_count} signal(s) missing; uncertainty penalty applied.")
     if len(triggered_rules) == 0:
         confidence_notes.append("No critical risk rules triggered in this run.")
+    confidence_notes.extend(confidence["confidence_notes"])
 
     trace = build_trace(
         input_summary=input_summary,
@@ -88,5 +114,9 @@ def run_decision_engine(
         risk_score=round(risk_score, 2),
         recommendations=recommendation_dicts,
         trace=trace,
+        alignment_confidence=confidence["alignment_confidence"],
+        recommendation_confidence=confidence["recommendation_confidence"],
+        confidence_breakdown=confidence["confidence_breakdown"],
+        confidence_version=confidence["confidence_version"],
         engine_version=engine_version,
     )

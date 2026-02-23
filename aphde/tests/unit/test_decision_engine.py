@@ -32,6 +32,13 @@ def test_run_decision_engine_returns_scored_explainable_result() -> None:
 
     assert 0.0 <= result.alignment_score <= 100.0
     assert 0.0 <= result.risk_score <= 100.0
+    assert 0.0 <= result.alignment_confidence <= 1.0
+    assert result.recommendation_confidence is not None
+    assert result.confidence_breakdown is not None
+    assert result.confidence_version == "conf_v1"
     assert "score_breakdown" in result.trace
     assert "triggered_rules" in result.trace
     assert isinstance(result.recommendations, list)
+    rec_ids = {rec["id"] for rec in result.recommendations}
+    rec_conf_ids = {item["id"] for item in result.recommendation_confidence}
+    assert rec_conf_ids == rec_ids
