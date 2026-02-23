@@ -11,8 +11,14 @@
     recommendation_confidence: list[dict],
     confidence_breakdown: dict,
     confidence_version: str,
+    context_applied: bool = False,
+    context_notes: list[str] | None = None,
+    context_version: str = "ctx_v1",
+    context_json: dict | None = None,
     engine_version: str,
 ) -> dict:
+    context_notes = context_notes or []
+    context_json = context_json or {}
     return {
         "input_summary": input_summary,
         "computed_signals": computed_signals,
@@ -25,5 +31,9 @@
         "recommendation_confidence": recommendation_confidence,
         "confidence_breakdown": confidence_breakdown,
         "confidence_version": confidence_version,
+        "context_applied": context_applied,
+        "context_notes": context_notes,
+        "context_version": context_version,
+        "context_json": context_json,
         "engine_version": engine_version,
     }

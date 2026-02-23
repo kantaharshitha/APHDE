@@ -5,7 +5,9 @@ from typing import Any
 
 from core.data.db import get_connection
 from core.data.migrations.migrate_v2_confidence import run_migration
+from core.data.migrations.migrate_v3_context import run_migration as run_context_migration
 from core.data.repositories.calorie_repo import CalorieLogRepository
+from core.data.repositories.context_repo import ContextInputRepository
 from core.data.repositories.decision_repo import DecisionRunRepository
 from core.data.repositories.goal_repo import GoalRepository
 from core.data.repositories.weight_repo import WeightLogRepository
@@ -42,9 +44,11 @@ def _history_from_decision_rows(rows: list[Any]) -> list[dict[str, Any]]:
 def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
     # Ensure older local databases are upgraded before accessing V2 confidence fields.
     run_migration(db_path)
+    run_context_migration(db_path)
     with get_connection(db_path) as conn:
         goal_repo = GoalRepository(conn)
         decision_repo = DecisionRunRepository(conn)
+        context_repo = ContextInputRepository(conn)
         weight_repo = WeightLogRepository(conn)
         calorie_repo = CalorieLogRepository(conn)
         workout_repo = WorkoutLogRepository(conn)
@@ -55,6 +59,13 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
 
         goal_type = GoalType(goal["goal_type"])
         target = json.loads(goal["target_json"]) if goal["target_json"] else {}
+        context_input = None
+        latest_context = context_repo.latest_for_user(user_id=user_id, context_type="cycle")
+        if latest_context is not None:
+            try:
+                context_input = json.loads(latest_context["context_payload_json"])
+            except (TypeError, json.JSONDecodeError):
+                context_input = None
 
         weight_logs = _row_to_dicts(weight_repo.list_recent(user_id, days=28))
         calorie_logs = _row_to_dicts(calorie_repo.list_recent(user_id, days=28))
@@ -90,6 +101,7 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
             },
             history=history,
             previous_alignment_confidence=previous_alignment_confidence,
+            context_input=context_input,
         )
 
         return decision_repo.create(
@@ -102,6 +114,9 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
             recommendation_confidence=result.recommendation_confidence,
             confidence_breakdown=result.confidence_breakdown,
             confidence_version=result.confidence_version,
+            context_applied=result.context_applied,
+            context_version=result.context_version,
+            context_json=result.context_json,
             trace=result.trace,
             engine_version=result.engine_version,
         )

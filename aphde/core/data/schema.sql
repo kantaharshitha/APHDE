@@ -56,6 +56,16 @@ CREATE TABLE IF NOT EXISTS signal_snapshots (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS context_inputs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    log_date TEXT NOT NULL,
+    context_type TEXT NOT NULL,
+    context_payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS decision_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -68,6 +78,9 @@ CREATE TABLE IF NOT EXISTS decision_runs (
     recommendation_confidence_json TEXT NOT NULL DEFAULT '[]',
     confidence_breakdown_json TEXT NOT NULL DEFAULT '{}',
     confidence_version TEXT NOT NULL DEFAULT 'conf_v1',
+    context_applied INTEGER NOT NULL DEFAULT 0,
+    context_version TEXT NOT NULL DEFAULT 'ctx_v1',
+    context_json TEXT NOT NULL DEFAULT '{}',
     trace_json TEXT NOT NULL,
     engine_version TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),

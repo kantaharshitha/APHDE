@@ -1,6 +1,7 @@
 ﻿from dataclasses import dataclass
 from typing import Any
 
+from core.context.registry import apply_context
 from core.decision.ranker import rank_recommendations
 from core.decision.rules import detect_additional_risks
 from core.explain.serializers import recommendations_to_dicts
@@ -22,6 +23,10 @@ class DecisionResult:
     recommendation_confidence: list[dict[str, Any]] | None = None
     confidence_breakdown: dict[str, Any] | None = None
     confidence_version: str = "conf_v1"
+    context_applied: bool = False
+    context_notes: list[str] | None = None
+    context_version: str = "ctx_v1"
+    context_json: dict[str, Any] | None = None
     engine_version: str = "v1"
 
 
@@ -31,17 +36,42 @@ def run_decision_engine(
     signals: SignalBundle,
     target: dict[str, Any],
     input_summary: dict[str, Any],
+    context_input: dict[str, Any] | None = None,
     history: list[dict[str, Any]] | None = None,
     previous_alignment_confidence: float | None = None,
     engine_version: str = "v1",
 ) -> DecisionResult:
     evaluation = strategy.evaluate(signals, target)
-    base_recommendations = strategy.recommend(evaluation)
+
+    base_thresholds = {
+        "max_volatility": float(target.get("max_volatility", 0.08)),
+        "min_recovery": float(target.get("min_recovery", 0.55)),
+    }
+    context_result = apply_context(
+        goal_type=strategy.goal_name,
+        base_thresholds=base_thresholds,
+        score_inputs={"priority_score": float(evaluation.get("priority_score", 0.5))},
+        context_input=context_input,
+    )
+
+    deviations = dict(evaluation.get("deviations", {}))
+    if "volatility_miss" in deviations and signals.volatility_index is not None:
+        v_cap = context_result.modulated_thresholds.get("max_volatility", base_thresholds["max_volatility"])
+        deviations["volatility_miss"] = float(signals.volatility_index) > float(v_cap)
+    if "recovery_miss" in deviations and signals.recovery_index is not None:
+        r_floor = context_result.modulated_thresholds.get("min_recovery", base_thresholds["min_recovery"])
+        deviations["recovery_miss"] = float(signals.recovery_index) < float(r_floor)
+    evaluation["deviations"] = deviations
 
     additional_risks = detect_additional_risks(signals)
     triggered_rules = sorted(set(evaluation.get("risks", []) + additional_risks))
 
     urgency = float(evaluation.get("priority_score", 0.5))
+    urgency *= float(context_result.penalty_scalars.get("priority_score_scale", 1.0))
+    urgency = max(0.0, min(1.0, urgency))
+    evaluation["priority_score"] = urgency
+
+    base_recommendations = strategy.recommend(evaluation)
     ranked = rank_recommendations(base_recommendations, urgency=urgency)
 
     sufficiency = signals.sufficiency or {}
@@ -71,6 +101,7 @@ def run_decision_engine(
         required_days=7,
         previous_alignment_confidence=previous_alignment_confidence,
     )
+
     rec_conf_by_id = {item["id"]: item["confidence"] for item in confidence["recommendation_confidence"]}
     ranking_trace = [
         {
@@ -89,6 +120,13 @@ def run_decision_engine(
     if len(triggered_rules) == 0:
         confidence_notes.append("No critical risk rules triggered in this run.")
     confidence_notes.extend(confidence["confidence_notes"])
+
+    context_json = {
+        "modulated_thresholds": context_result.modulated_thresholds,
+        "penalty_scalars": context_result.penalty_scalars,
+        "tolerance_adjustments": context_result.tolerance_adjustments,
+        "metadata": context_result.context_metadata,
+    }
 
     trace = build_trace(
         input_summary=input_summary,
@@ -111,6 +149,10 @@ def run_decision_engine(
         recommendation_confidence=confidence["recommendation_confidence"],
         confidence_breakdown=confidence["confidence_breakdown"],
         confidence_version=confidence["confidence_version"],
+        context_applied=context_result.context_applied,
+        context_notes=context_result.context_notes,
+        context_version=context_result.context_version,
+        context_json=context_json,
         engine_version=engine_version,
     )
 
@@ -123,5 +165,9 @@ def run_decision_engine(
         recommendation_confidence=confidence["recommendation_confidence"],
         confidence_breakdown=confidence["confidence_breakdown"],
         confidence_version=confidence["confidence_version"],
+        context_applied=context_result.context_applied,
+        context_notes=context_result.context_notes,
+        context_version=context_result.context_version,
+        context_json=context_json,
         engine_version=engine_version,
     )

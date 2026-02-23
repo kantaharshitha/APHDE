@@ -94,6 +94,20 @@
       "Lower confidence due to high volatility."
     ],
     "confidence_version": "conf_v1",
+    "context_applied": false,
+    "context_json": {
+      "metadata": {
+        "context_type": null
+      },
+      "modulated_thresholds": {
+        "max_volatility": 0.08,
+        "min_recovery": 0.55
+      },
+      "penalty_scalars": {},
+      "tolerance_adjustments": {}
+    },
+    "context_notes": [],
+    "context_version": "ctx_v1",
     "engine_version": "v1",
     "goal_strategy_applied": "weight_loss",
     "input_summary": {
