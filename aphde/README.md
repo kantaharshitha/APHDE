@@ -2,7 +2,7 @@
 
 Adaptive Personal Health Decision Engine (APHDE) is a deterministic, modular, explainable decision framework.
 
-As of V4, APHDE is structured as a domain-agnostic core with pluggable domain implementations.
+As of V5, APHDE is structured as a domain-agnostic core with pluggable domain implementations and a governance/observability layer.
 The health domain is the reference implementation under `domains/health/`.
 
 ## Quickstart
@@ -32,7 +32,7 @@ cd aphde
 
 ```bash
 cd aphde
-.venv\Scripts\python.exe scripts\run_demo_scenarios.py
+.venv\Scripts\python.exe -m scripts.run_demo_scenarios
 ```
 
 ## Docs
@@ -44,6 +44,7 @@ cd aphde
 - Context engine: `docs/context-engine.md`
 - Demo walkthroughs: `docs/demo-scenarios.md`
 - V4 release notes: `docs/release-notes-v4.md`
+- V5 release notes: `docs/release-notes-v5.md`
 
 ## Current Scope
 
@@ -58,8 +59,13 @@ cd aphde
   - `domains/health/domain_definition.py`
   - health signals + strategies + thresholds
 - Streamlit UI for goal setup, logging, and dashboard
+- Governance layer:
+  - output hashing
+  - determinism verification metadata
+  - run diff utilities
+  - history analytics summaries
 
-## V4 Composition Model
+## V5 Governance Highlights
 
 `core/services/run_evaluation.py` requires an injected `DomainDefinition`.
 
@@ -77,3 +83,9 @@ run_evaluation(
 ```
 
 This keeps core runtime decoupled from domain-specific behavior.
+
+The dashboard now also surfaces:
+1. Version triad + domain metadata.
+2. Determinism status and output hash.
+3. Run-to-run diff viewer.
+4. History analytics (alignment/confidence/context/rules).

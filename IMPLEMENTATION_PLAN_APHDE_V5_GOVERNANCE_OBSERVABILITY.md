@@ -213,3 +213,17 @@ Mitigation: migration tests on synthetic legacy schemas.
 5. Version triad and domain metadata visible in governance panel.
 6. V4 behavior parity preserved.
 7. All tests and boundary checks pass.
+
+---
+
+### 8. Execution Status (Current)
+1. M1 complete: Governance scaffold + interfaces.
+2. M2 complete: Determinism hashing/verifier.
+3. M3 complete: DB migration + repository updates.
+4. M4 complete: Lifecycle integration in `run_evaluation`.
+5. M5 complete: Version diff engine.
+6. M6 complete: History analyzer.
+7. M7 complete: UI governance panel.
+8. M8 complete: Test hardening + docs + release readiness checks.
+
+V5 status: release-ready pending final tag.

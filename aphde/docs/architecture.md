@@ -1,8 +1,8 @@
-# APHDE Architecture (V4)
+# APHDE Architecture (V5)
 
 ## Overview
 
-APHDE V4 separates a domain-agnostic deterministic core from domain-specific implementations.
+APHDE V5 separates a domain-agnostic deterministic core from domain-specific implementations and adds governance observability around evaluation lifecycle.
 
 Core responsibilities:
 - orchestration pipeline
@@ -11,6 +11,7 @@ Core responsibilities:
 - context modulation
 - explanation trace assembly
 - persistence
+- governance observability (hashing, determinism verification, run diff, history analytics)
 
 Domain responsibilities:
 - signal computation from raw logs
@@ -25,6 +26,11 @@ core/
     contracts.py
     pipeline.py
     runner.py
+  governance/
+    hashing.py
+    determinism.py
+    version_diff.py
+    history_analyzer.py
   decision/
   scoring/
   context/
@@ -54,7 +60,7 @@ These boundaries are enforced by:
 - `scripts/check_architecture_boundaries.py`
 - `tests/unit/test_architecture_boundaries.py`
 
-## Runtime Flow (V4)
+## Runtime Flow (V5)
 
 1. Caller injects `DomainDefinition` into `run_evaluation`.
 2. Service loads logs and context entries from repositories.
@@ -62,9 +68,14 @@ These boundaries are enforced by:
 4. Service resolves strategy via domain contract.
 5. Core runner executes deterministic decision pipeline.
 6. Score/confidence/context outputs are persisted.
-7. Trace includes version triad + additive domain metadata:
+7. Governance layer computes:
+- input signature hash
+- output hash
+- determinism verification metadata
+8. Trace includes version triad + additive metadata:
 - `domain_name`
 - `domain_version`
+- `governance` block
 
 ## Determinism
 
@@ -84,8 +95,9 @@ Each run persists:
 Trace also includes:
 - `domain_name`
 - `domain_version`
+- governance fields (`output_hash`, determinism status/reason)
 
 ## Backward Behavior Compatibility
 
-V4 is a structural refactor, not a feature change.
-Existing outputs are guarded through snapshot, parity, and integration tests.
+V5 is an engineering maturity expansion, not a domain feature expansion.
+Core decision behavior is guarded through snapshot, parity, determinism, and integration tests.
