@@ -1,4 +1,5 @@
 from datetime import date
+import json
 
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
@@ -46,5 +47,15 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     assert "recommendation_confidence_json" in latest.keys()
     assert "confidence_breakdown_json" in latest.keys()
     assert "confidence_version" in latest.keys()
-    assert latest["alignment_confidence"] == 0.0
+    assert 0.0 <= latest["alignment_confidence"] <= 1.0
     assert latest["confidence_version"] == "conf_v1"
+
+    rec_conf = json.loads(latest["recommendation_confidence_json"])
+    conf_breakdown = json.loads(latest["confidence_breakdown_json"])
+    trace = json.loads(latest["trace_json"])
+    assert isinstance(rec_conf, list)
+    assert "components" in conf_breakdown
+    assert "alignment_confidence" in trace
+    assert "recommendation_confidence" in trace
+    assert "confidence_breakdown" in trace
+    assert "confidence_version" in trace

@@ -46,8 +46,15 @@
   ],
   "risk_score": 53.15,
   "trace": {
+    "alignment_confidence": 0.5167,
     "computed_signals": {
       "compliance_ratio": 0.55,
+      "deviations": {
+        "compliance_miss": true,
+        "recovery_miss": true,
+        "trend_miss": true,
+        "volatility_miss": true
+      },
       "muscle_balance_index": 0.6,
       "progressive_overload_score": 0.52,
       "recovery_index": 0.4,
@@ -62,15 +69,51 @@
       "trend_slope": 0.02,
       "volatility_index": 0.11
     },
+    "confidence_breakdown": {
+      "components": {
+        "data_completeness": 1.0,
+        "historical_persistence": 0.5,
+        "signal_stability": 0.0833,
+        "threshold_distance": 0.0,
+        "window_sufficiency": 1.0
+      },
+      "confidence_version": "conf_v1",
+      "smoothing": {
+        "alpha": 0.2,
+        "previous_used": false
+      },
+      "weights": {
+        "data_completeness": 0.3,
+        "historical_persistence": 0.2,
+        "signal_stability": 0.2,
+        "threshold_distance": 0.2,
+        "window_sufficiency": 0.1
+      }
+    },
     "confidence_notes": [
       "Lower confidence due to high volatility."
     ],
+    "confidence_version": "conf_v1",
     "engine_version": "v1",
     "goal_strategy_applied": "weight_loss",
     "input_summary": {
       "goal_type": "weight_loss",
       "user_id": 1
     },
+    "recommendation_confidence": [
+      {
+        "confidence": 0.8568,
+        "id": "wl_nutrition_01"
+      },
+      {
+        "confidence": 0.8688,
+        "id": "wl_compliance_01"
+      },
+      {
+        "confidence": 0.8468,
+        "id": "wl_recovery_01"
+      }
+    ],
     "recommendation_ranking_trace": [
       {
         "computed_confidence": 0.8568,

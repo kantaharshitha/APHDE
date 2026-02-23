@@ -7,6 +7,10 @@
     score_breakdown: dict,
     recommendation_ranking_trace: list[dict],
     confidence_notes: list[str],
+    alignment_confidence: float,
+    recommendation_confidence: list[dict],
+    confidence_breakdown: dict,
+    confidence_version: str,
     engine_version: str,
 ) -> dict:
     return {
@@ -17,5 +21,9 @@
         "score_breakdown": score_breakdown,
         "recommendation_ranking_trace": recommendation_ranking_trace,
         "confidence_notes": confidence_notes,
+        "alignment_confidence": alignment_confidence,
+        "recommendation_confidence": recommendation_confidence,
+        "confidence_breakdown": confidence_breakdown,
+        "confidence_version": confidence_version,
         "engine_version": engine_version,
     }

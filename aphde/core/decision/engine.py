@@ -100,12 +100,17 @@ def run_decision_engine(
             "recovery_index": signals.recovery_index,
             "progressive_overload_score": signals.progressive_overload_score,
             "sufficiency": sufficiency,
+            "deviations": evaluation.get("deviations", {}),
         },
         strategy_name=strategy.goal_name,
         triggered_rules=triggered_rules,
         score_breakdown=score_breakdown,
         recommendation_ranking_trace=ranking_trace,
         confidence_notes=confidence_notes,
+        alignment_confidence=confidence["alignment_confidence"],
+        recommendation_confidence=confidence["recommendation_confidence"],
+        confidence_breakdown=confidence["confidence_breakdown"],
+        confidence_version=confidence["confidence_version"],
         engine_version=engine_version,
     )
 

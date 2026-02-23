@@ -56,3 +56,14 @@ class DecisionRunRepository:
             "SELECT * FROM decision_runs WHERE user_id = ? ORDER BY id DESC LIMIT 1",
             (user_id,),
         ).fetchone()
+
+    def list_recent(self, user_id: int, limit: int = 10) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            """
+            SELECT * FROM decision_runs
+            WHERE user_id = ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (user_id, limit),
+        ).fetchall()

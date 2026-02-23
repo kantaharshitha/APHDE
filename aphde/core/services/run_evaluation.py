@@ -19,6 +19,25 @@ def _row_to_dicts(rows: list[Any]) -> list[dict[str, Any]]:
     return [dict(row) for row in rows]
 
 
+def _history_from_decision_rows(rows: list[Any]) -> list[dict[str, Any]]:
+    history: list[dict[str, Any]] = []
+    for row in rows:
+        trace_raw = row["trace_json"] if "trace_json" in row.keys() else None
+        if not trace_raw:
+            continue
+        try:
+            trace = json.loads(trace_raw)
+        except (TypeError, json.JSONDecodeError):
+            continue
+        history.append(
+            {
+                "deviations": trace.get("deviations", trace.get("computed_signals", {}).get("deviations", {})),
+                "triggered_rules": trace.get("triggered_rules", []),
+            }
+        )
+    return history
+
+
 def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
     with get_connection(db_path) as conn:
         goal_repo = GoalRepository(conn)
@@ -46,6 +65,12 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
         )
 
         strategy = StrategyFactory.create(goal_type)
+        recent_decisions = decision_repo.list_recent(user_id=user_id, limit=10)
+        history = _history_from_decision_rows(recent_decisions)
+        previous_alignment_confidence = None
+        if recent_decisions:
+            previous_alignment_confidence = float(recent_decisions[0]["alignment_confidence"])
+
         result = run_decision_engine(
             strategy=strategy,
             signals=signals,
@@ -58,6 +83,8 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
                 "calorie_log_count": len(calorie_logs),
                 "workout_log_count": len(workout_logs),
             },
+            history=history,
+            previous_alignment_confidence=previous_alignment_confidence,
         )
 
         return decision_repo.create(
@@ -65,7 +92,11 @@ def run_evaluation(user_id: int, db_path: str = "aphde.db") -> int:
             goal_id=int(goal["id"]),
             alignment_score=result.alignment_score,
             risk_score=result.risk_score,
+            alignment_confidence=result.alignment_confidence,
             recommendations=result.recommendations,
+            recommendation_confidence=result.recommendation_confidence,
+            confidence_breakdown=result.confidence_breakdown,
+            confidence_version=result.confidence_version,
             trace=result.trace,
             engine_version=result.engine_version,
         )
