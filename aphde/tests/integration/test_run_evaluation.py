@@ -57,6 +57,10 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     assert "recommendation_confidence_json" in latest.keys()
     assert "confidence_breakdown_json" in latest.keys()
     assert "confidence_version" in latest.keys()
+    assert "input_signature_hash" in latest.keys()
+    assert "output_hash" in latest.keys()
+    assert "determinism_verified" in latest.keys()
+    assert "governance_json" in latest.keys()
     assert 0.0 <= latest["alignment_confidence"] <= 1.0
     assert latest["confidence_version"] == "conf_v1"
 
@@ -71,6 +75,11 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     assert "confidence_version" in trace
     assert trace["domain_name"] == "health"
     assert trace["domain_version"] == "health_v1"
+    assert "governance" in trace
+    assert isinstance(trace["governance"].get("output_hash"), str)
+    assert len(trace["governance"]["output_hash"]) == 64
+    assert trace["governance"]["determinism_reason"] == "NO_BASELINE"
+    assert trace["governance"]["determinism_verified"] is None
     recs = json.loads(latest["recommendations_json"])
     rec_ids = {item["id"] for item in recs}
     rec_conf_ids = {item["id"] for item in rec_conf}
@@ -104,9 +113,15 @@ def test_run_evaluation_uses_previous_confidence_for_smoothing(tmp_path) -> None
     with get_connection(db_path) as conn:
         rows = DecisionRunRepository(conn).list_recent(user_id=user_id, limit=2)
         latest = rows[0]
+        previous = rows[1]
         latest_trace = json.loads(latest["trace_json"])
+        previous_trace = json.loads(previous["trace_json"])
 
     assert latest_trace["confidence_breakdown"]["smoothing"]["previous_used"] is True
+    assert latest_trace["governance"]["determinism_reason"] == "NO_BASELINE"
+    assert latest_trace["governance"]["determinism_verified"] is None
+    assert previous_trace["governance"]["determinism_reason"] == "NO_BASELINE"
+    assert previous_trace["governance"]["determinism_verified"] is None
 
 
 def test_run_evaluation_persists_and_traces_cycle_context(tmp_path) -> None:

@@ -7,6 +7,8 @@ import streamlit as st
 from app.utils import DB_PATH, bootstrap_db_and_user
 from core.data.db import get_connection
 from core.data.repositories.decision_repo import DecisionRunRepository
+from core.governance.history_analyzer import summarize_history
+from core.governance.version_diff import diff_runs
 from core.services.run_evaluation import run_evaluation
 from domains.health.domain_definition import HealthDomainDefinition
 
@@ -53,7 +55,9 @@ if run_button:
         st.error(str(exc))
 
 with get_connection(DB_PATH) as conn:
-    latest = DecisionRunRepository(conn).latest(user_id)
+    decision_repo = DecisionRunRepository(conn)
+    latest = decision_repo.latest(user_id)
+    recent_rows = decision_repo.list_recent(user_id=user_id, limit=25)
 
 if latest is None:
     st.info("No decision runs found. Set a goal and add logs, then run evaluation.")
@@ -61,6 +65,7 @@ if latest is None:
 
 recommendations = json.loads(latest["recommendations_json"])
 trace = json.loads(latest["trace_json"])
+governance_block = trace.get("governance", {}) if isinstance(trace, dict) else {}
 
 alignment_confidence = float(latest["alignment_confidence"]) if "alignment_confidence" in latest.keys() else 0.0
 confidence_version = latest["confidence_version"] if "confidence_version" in latest.keys() else "conf_v1"
@@ -168,6 +173,85 @@ if context_json:
     with t3:
         st.markdown("**Tolerance adjustments**")
         st.json(adjustments)
+
+st.subheader("Governance")
+governance_col1, governance_col2, governance_col3 = st.columns(3)
+
+determinism_verified = latest["determinism_verified"] if "determinism_verified" in latest.keys() else None
+if determinism_verified is None:
+    determinism_text = "Unknown (no baseline)"
+elif int(determinism_verified) == 1:
+    determinism_text = "Verified"
+else:
+    determinism_text = "Mismatch"
+
+output_hash = latest["output_hash"] if "output_hash" in latest.keys() else governance_block.get("output_hash", "")
+input_signature_hash = (
+    latest["input_signature_hash"] if "input_signature_hash" in latest.keys() else governance_block.get("input_signature_hash", "")
+)
+domain_name = trace.get("domain_name", "unknown") if isinstance(trace, dict) else "unknown"
+domain_version = trace.get("domain_version", "unknown") if isinstance(trace, dict) else "unknown"
+
+governance_col1.metric("Determinism", determinism_text)
+governance_col2.metric("Domain", domain_name)
+governance_col3.metric("Domain Version", domain_version)
+st.caption(f"Output Hash: `{output_hash}`")
+st.caption(f"Input Signature Hash: `{input_signature_hash}`")
+
+st.markdown("**Version Diff Viewer**")
+if len(recent_rows) >= 2:
+    run_options = [int(row["id"]) for row in recent_rows]
+    diff_col1, diff_col2 = st.columns(2)
+    with diff_col1:
+        run_a_id = st.selectbox("Base run", options=run_options, index=min(1, len(run_options) - 1))
+    with diff_col2:
+        run_b_id = st.selectbox("Compare run", options=run_options, index=0)
+
+    if run_a_id == run_b_id:
+        st.info("Select two different runs to compare.")
+    else:
+        row_map = {int(row["id"]): row for row in recent_rows}
+        row_a = row_map[run_a_id]
+        row_b = row_map[run_b_id]
+        run_a = {
+            "alignment_score": float(row_a["alignment_score"]),
+            "risk_score": float(row_a["risk_score"]),
+            "alignment_confidence": float(row_a["alignment_confidence"]) if "alignment_confidence" in row_a.keys() else 0.0,
+            "recommendations": json.loads(row_a["recommendations_json"]) if row_a["recommendations_json"] else [],
+            "context_applied": bool(row_a["context_applied"]) if "context_applied" in row_a.keys() else False,
+            "context_version": row_a["context_version"] if "context_version" in row_a.keys() else "ctx_v1",
+        }
+        run_b = {
+            "alignment_score": float(row_b["alignment_score"]),
+            "risk_score": float(row_b["risk_score"]),
+            "alignment_confidence": float(row_b["alignment_confidence"]) if "alignment_confidence" in row_b.keys() else 0.0,
+            "recommendations": json.loads(row_b["recommendations_json"]) if row_b["recommendations_json"] else [],
+            "context_applied": bool(row_b["context_applied"]) if "context_applied" in row_b.keys() else False,
+            "context_version": row_b["context_version"] if "context_version" in row_b.keys() else "ctx_v1",
+        }
+        st.json(diff_runs(run_a, run_b))
+else:
+    st.info("Need at least 2 runs for version diff.")
+
+st.markdown("**Evaluation History Analytics**")
+history_runs = []
+for row in recent_rows:
+    trace_json = json.loads(row["trace_json"]) if row["trace_json"] else {}
+    governance = trace_json.get("governance", {}) if isinstance(trace_json, dict) else {}
+    history_runs.append(
+        {
+            "alignment_score": float(row["alignment_score"]),
+            "alignment_confidence": float(row["alignment_confidence"]) if "alignment_confidence" in row.keys() else 0.0,
+            "context_applied": bool(row["context_applied"]) if "context_applied" in row.keys() else False,
+            "triggered_rules": trace_json.get("triggered_rules", []) if isinstance(trace_json, dict) else [],
+            "determinism_verified": (
+                bool(row["determinism_verified"]) if "determinism_verified" in row.keys() and row["determinism_verified"] is not None else None
+            ),
+            "determinism_reason": governance.get("determinism_reason"),
+        }
+    )
+history_summary = summarize_history(history_runs)
+st.json(history_summary)
 
 st.subheader("Explanation Trace")
 st.json(trace)

@@ -24,18 +24,25 @@ class DecisionRunRepository:
         context_applied: bool = False,
         context_version: str = "ctx_v1",
         context_json: dict | None = None,
+        input_signature_hash: str | None = None,
+        output_hash: str | None = None,
+        determinism_verified: bool | None = None,
+        governance_json: dict | None = None,
         engine_version: str = "v1",
     ) -> int:
         recommendation_confidence = recommendation_confidence or []
         confidence_breakdown = confidence_breakdown or {}
         context_json = context_json or {}
+        governance_json = governance_json or {}
         cursor = self.conn.execute(
             """
             INSERT INTO decision_runs (
                 user_id, goal_id, run_date, alignment_score, risk_score, alignment_confidence,
                 recommendations_json, recommendation_confidence_json, confidence_breakdown_json,
-                confidence_version, context_applied, context_version, context_json, trace_json, engine_version
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                confidence_version, context_applied, context_version, context_json,
+                input_signature_hash, output_hash, determinism_verified, governance_json,
+                trace_json, engine_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -51,6 +58,10 @@ class DecisionRunRepository:
                 int(context_applied),
                 context_version,
                 json.dumps(context_json),
+                input_signature_hash,
+                output_hash,
+                int(determinism_verified) if determinism_verified is not None else None,
+                json.dumps(governance_json),
                 json.dumps(trace),
                 engine_version,
             ),
@@ -62,6 +73,12 @@ class DecisionRunRepository:
         return self.conn.execute(
             "SELECT * FROM decision_runs WHERE user_id = ? ORDER BY id DESC LIMIT 1",
             (user_id,),
+        ).fetchone()
+
+    def get_by_id(self, decision_id: int) -> sqlite3.Row | None:
+        return self.conn.execute(
+            "SELECT * FROM decision_runs WHERE id = ? LIMIT 1",
+            (decision_id,),
         ).fetchone()
 
     def list_recent(self, user_id: int, limit: int = 10) -> list[sqlite3.Row]:
