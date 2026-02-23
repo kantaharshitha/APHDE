@@ -27,11 +27,23 @@ def _print_latest(user_id: int, conn) -> None:
     import json
 
     recs = json.loads(row["recommendations_json"])
+    rec_conf = json.loads(row["recommendation_confidence_json"])
     trace = json.loads(row["trace_json"])
-    print(f"alignment={row['alignment_score']:.2f} risk={row['risk_score']:.2f}")
+    print(
+        "alignment="
+        f"{row['alignment_score']:.2f} "
+        f"risk={row['risk_score']:.2f} "
+        f"alignment_conf={row['alignment_confidence']:.2f}"
+    )
+    print(f"confidence_version={row['confidence_version']}")
     print(f"triggered_rules={trace.get('triggered_rules', [])}")
     if recs:
-        print(f"top_recommendation={recs[0]['id']} -> {recs[0]['action']}")
+        conf_map = {item["id"]: item["confidence"] for item in rec_conf}
+        top_conf = conf_map.get(recs[0]["id"], "N/A")
+        print(
+            f"top_recommendation={recs[0]['id']} "
+            f"(conf={top_conf}) -> {recs[0]['action']}"
+        )
     print("---")
 
 

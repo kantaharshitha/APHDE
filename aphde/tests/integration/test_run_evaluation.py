@@ -59,3 +59,39 @@ def test_run_evaluation_persists_decision_with_trace(tmp_path) -> None:
     assert "recommendation_confidence" in trace
     assert "confidence_breakdown" in trace
     assert "confidence_version" in trace
+    recs = json.loads(latest["recommendations_json"])
+    rec_ids = {item["id"] for item in recs}
+    rec_conf_ids = {item["id"] for item in rec_conf}
+    assert rec_ids == rec_conf_ids
+
+
+def test_run_evaluation_uses_previous_confidence_for_smoothing(tmp_path) -> None:
+    db_path = tmp_path / "eval_smooth.db"
+    init_db(db_path)
+
+    with get_connection(db_path) as conn:
+        user_repo = UserRepository(conn)
+        goal_repo = GoalRepository(conn)
+        weight_repo = WeightLogRepository(conn)
+        calorie_repo = CalorieLogRepository(conn)
+        workout_repo = WorkoutLogRepository(conn)
+
+        user_id = user_repo.create()
+        goal_repo.set_active_goal(user_id, GoalType.WEIGHT_LOSS, {})
+
+        today = date.today()
+        for i in range(7):
+            weight_repo.add(user_id, today, 78.0 + (0.03 * i))
+            calorie_repo.add(user_id, today, 2400, 120)
+            workout_repo.add(user_id, today, "upper", 50, 5000 + 50 * i, 8.1, True, True)
+
+    first_id = run_evaluation(user_id=user_id, db_path=str(db_path))
+    second_id = run_evaluation(user_id=user_id, db_path=str(db_path))
+    assert second_id > first_id
+
+    with get_connection(db_path) as conn:
+        rows = DecisionRunRepository(conn).list_recent(user_id=user_id, limit=2)
+        latest = rows[0]
+        latest_trace = json.loads(latest["trace_json"])
+
+    assert latest_trace["confidence_breakdown"]["smoothing"]["previous_used"] is True

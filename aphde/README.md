@@ -27,8 +27,9 @@ cd aphde
 
 ## Docs
 
-- Architecture notes: `docs/architecture.md`
+- Architecture: `docs/architecture.md`
 - Decision framework: `docs/decision-rules.md`
+- Confidence model: `docs/confidence-model.md`
 - Demo walkthroughs: `docs/demo-scenarios.md`
 
 ## Current Scope
@@ -37,5 +38,7 @@ cd aphde
 - Deterministic signal engine
 - Goal-adaptive strategy layer (4 strategies)
 - Decision engine with ranked recommendations
-- Explanation trace persistence
+- Composite scoring (`alignment_score`, `risk_score`)
+- Deterministic confidence modeling (`alignment_confidence`, per-rec confidence)
+- Explanation trace persistence (versioned)
 - Streamlit workflow pages for goal setup, logging, and dashboard

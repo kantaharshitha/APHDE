@@ -5,7 +5,7 @@
 1. Data Layer (`core/data`)
 - SQLite schema and connection utilities.
 - Repository classes isolate persistence concerns.
-- Decision artifacts are stored with serialized recommendations and traces.
+- Decision artifacts store scores, confidence payloads, recommendations, and traces.
 
 2. Signal Engine (`core/signals`)
 - Deterministic calculators for trend, volatility, compliance, recovery, muscle balance, overload.
@@ -23,12 +23,17 @@
 - Produces deterministic result for same inputs.
 
 5. Scoring Engine (`core/scoring`)
-- Builds component penalties.
-- Computes final alignment score and complementary risk score.
+- `breakdown.py` and `alignment.py` compute alignment/risk scores.
+- `confidence.py` computes deterministic reliability metrics:
+  - alignment confidence
+  - per-recommendation confidence
+  - component breakdown
+  - confidence notes
 
 6. Explanation Layer (`core/explain`)
 - Serializes recommendations.
 - Produces structured trace payload for auditability and replay.
+- Trace includes confidence blocks and versioning fields.
 
 7. Application Layer (`app`)
 - Streamlit pages for goal setup, log input, and decision dashboard.
@@ -39,12 +44,13 @@
 1. User enters logs and sets active goal.
 2. Service loads latest logs and computes `SignalBundle`.
 3. Strategy factory resolves active goal strategy.
-4. Decision engine computes risks, ranking, and scores.
-5. Explanation trace and recommendations are persisted.
-6. Dashboard renders latest run (score + reasons + ranked actions).
+4. Decision engine computes risks, ranking, score, and confidence.
+5. Service persists decision row with confidence JSON fields.
+6. Dashboard renders score + confidence + ranked actions + trace.
 
 ## Determinism and Extensibility
 
-- No ML in V1; all outputs are deterministic.
+- No ML; all outputs are deterministic formulas.
 - Strategy classes are isolated and pluggable.
-- Trace schema is versioned (`engine_version`) to support future evolution.
+- Confidence model is independently versioned (`confidence_version`).
+- Trace schema includes both `engine_version` and `confidence_version` for replay stability.

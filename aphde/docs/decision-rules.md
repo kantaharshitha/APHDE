@@ -7,7 +7,8 @@
 3. Apply cross-cutting risk rules.
 4. Rank recommendations by deterministic weighted score.
 5. Build score breakdown penalties and compute alignment/risk scores.
-6. Build structured trace and persist decision run.
+6. Compute confidence outputs (alignment + recommendation-level).
+7. Build structured trace and persist decision run.
 
 ## Cross-Cutting Risk Rules
 
@@ -48,16 +49,42 @@ Final score:
 - `alignment_score = clamp(100 - sum(penalties), 0, 100)`
 - `risk_score = 100 - alignment_score`
 
+## Deterministic Confidence Model
+
+Implemented in `core/scoring/confidence.py`.
+
+Outputs:
+- `alignment_confidence (0..1)`
+- `recommendation_confidence[]`
+- `confidence_breakdown`
+- `confidence_notes`
+- `confidence_version`
+
+Components (weighted, bounded):
+- data completeness
+- signal stability
+- threshold distance strength
+- historical persistence
+- window sufficiency
+
+Smoothing:
+- Optional deterministic smoothing with prior confidence:
+- `C = clamp(alpha * C_prev + (1-alpha) * C_raw, 0, 1)`
+
 ## Explainability Contract
 
 Each decision run stores:
 - input summary (counts + active goal)
-- computed signal values + sufficiency map
+- computed signal values + sufficiency map + deviations
 - applied strategy name
 - triggered rules
 - score breakdown
 - recommendation ranking trace
 - confidence notes
+- alignment confidence
+- recommendation confidence
+- confidence breakdown
+- confidence version
 - engine version
 
 This supports deterministic replay and interview-grade reasoning audit.
