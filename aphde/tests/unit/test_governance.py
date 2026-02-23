@@ -63,6 +63,35 @@ def test_version_diff_returns_expected_delta_structure() -> None:
     assert diff["context_changes"]["context_applied_to"] is True
 
 
+def test_version_diff_detects_rank_shifts_for_shared_recommendations() -> None:
+    run_a = {
+        "alignment_score": 70.0,
+        "risk_score": 30.0,
+        "alignment_confidence": 0.72,
+        "recommendations": [
+            {"id": "rec_a", "priority": 1},
+            {"id": "rec_b", "priority": 2},
+        ],
+        "context_applied": False,
+        "context_version": "ctx_v1",
+    }
+    run_b = {
+        "alignment_score": 70.0,
+        "risk_score": 30.0,
+        "alignment_confidence": 0.72,
+        "recommendations": [
+            {"id": "rec_b", "priority": 1},
+            {"id": "rec_a", "priority": 2},
+        ],
+        "context_applied": False,
+        "context_version": "ctx_v1",
+    }
+    diff = diff_runs(run_a, run_b)
+    assert diff["recommendation_changes"]["added"] == []
+    assert diff["recommendation_changes"]["removed"] == []
+    assert len(diff["recommendation_changes"]["rank_shifts"]) == 2
+
+
 def test_history_analyzer_builds_trends_and_frequencies() -> None:
     runs = [
         {
@@ -87,3 +116,13 @@ def test_history_analyzer_builds_trends_and_frequencies() -> None:
     assert summary["context_application_frequency"] == 0.5
     assert summary["rule_trigger_distribution"]["RECOVERY_DROP"] == 2
     assert summary["determinism_pass_rate"] == 1.0
+
+
+def test_history_analyzer_reports_zero_when_no_runs() -> None:
+    summary = summarize_history([])
+    assert summary["count"] == 0
+    assert summary["alignment_trend"] == []
+    assert summary["confidence_trend"] == []
+    assert summary["context_application_frequency"] == 0.0
+    assert summary["rule_trigger_distribution"] == {}
+    assert summary["determinism_pass_rate"] == 0.0

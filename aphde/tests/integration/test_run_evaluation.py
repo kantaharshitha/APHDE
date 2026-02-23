@@ -2,6 +2,8 @@ from datetime import date
 import json
 
 from core.engine.contracts import DomainLogs, SignalBundleLike, StrategyLike
+from core.governance.history_analyzer import summarize_history
+from core.governance.version_diff import diff_runs
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.context_repo import ContextInputRepository
@@ -344,5 +346,73 @@ def test_run_evaluation_default_and_explicit_health_domain_have_parity(tmp_path)
     assert default_row["context_version"] == explicit_row["context_version"]
     assert default_row["context_json"] == explicit_row["context_json"]
     assert default_row["trace_json"] == explicit_row["trace_json"]
+
+
+def test_governance_diff_and_history_from_persisted_runs(tmp_path) -> None:
+    db_path = tmp_path / "eval_governance_analytics.db"
+    init_db(db_path)
+
+    with get_connection(db_path) as conn:
+        user_repo = UserRepository(conn)
+        goal_repo = GoalRepository(conn)
+        weight_repo = WeightLogRepository(conn)
+        calorie_repo = CalorieLogRepository(conn)
+        workout_repo = WorkoutLogRepository(conn)
+
+        user_id = user_repo.create()
+        goal_repo.set_active_goal(user_id, GoalType.WEIGHT_LOSS, {})
+        today = date.today()
+        for i in range(7):
+            weight_repo.add(user_id, today, 78.0 + (0.03 * i))
+            calorie_repo.add(user_id, today, 2400, 120)
+            workout_repo.add(user_id, today, "upper", 50, 5000 + 50 * i, 8.1, True, True)
+
+    _run_eval(user_id=user_id, db_path=str(db_path))
+    _run_eval(user_id=user_id, db_path=str(db_path))
+
+    with get_connection(db_path) as conn:
+        rows = DecisionRunRepository(conn).list_recent(user_id=user_id, limit=2)
+        latest = rows[0]
+        previous = rows[1]
+
+    latest_run = {
+        "alignment_score": float(latest["alignment_score"]),
+        "risk_score": float(latest["risk_score"]),
+        "alignment_confidence": float(latest["alignment_confidence"]),
+        "recommendations": json.loads(latest["recommendations_json"]),
+        "context_applied": bool(latest["context_applied"]),
+        "context_version": latest["context_version"],
+    }
+    previous_run = {
+        "alignment_score": float(previous["alignment_score"]),
+        "risk_score": float(previous["risk_score"]),
+        "alignment_confidence": float(previous["alignment_confidence"]),
+        "recommendations": json.loads(previous["recommendations_json"]),
+        "context_applied": bool(previous["context_applied"]),
+        "context_version": previous["context_version"],
+    }
+    run_diff = diff_runs(previous_run, latest_run)
+    assert "score_delta" in run_diff
+    assert "recommendation_changes" in run_diff
+    assert "context_changes" in run_diff
+
+    history_runs = []
+    for row in rows:
+        trace = json.loads(row["trace_json"])
+        history_runs.append(
+            {
+                "alignment_score": float(row["alignment_score"]),
+                "alignment_confidence": float(row["alignment_confidence"]),
+                "context_applied": bool(row["context_applied"]),
+                "triggered_rules": trace.get("triggered_rules", []),
+                "determinism_verified": (
+                    bool(row["determinism_verified"]) if row["determinism_verified"] is not None else None
+                ),
+            }
+        )
+    summary = summarize_history(history_runs)
+    assert summary["count"] == 2
+    assert len(summary["alignment_trend"]) == 2
+    assert "context_application_frequency" in summary
 
 
