@@ -42,6 +42,8 @@ cd aphde
 - Decision framework: `docs/decision-rules.md`
 - Confidence model: `docs/confidence-model.md`
 - Context engine: `docs/context-engine.md`
+- UI data contracts: `docs/ui_data_contracts.md`
+- UI QA checklist: `docs/ui-modernization-checklist.md`
 - Demo walkthroughs: `docs/demo-scenarios.md`
 - V4 release notes: `docs/release-notes-v4.md`
 - V5 release notes: `docs/release-notes-v5.md`
@@ -89,3 +91,13 @@ The dashboard now also surfaces:
 2. Determinism status and output hash.
 3. Run-to-run diff viewer.
 4. History analytics (alignment/confidence/context/rules).
+
+## UI Service Boundary
+
+Dashboard page rendering is separated from backend composition:
+
+- `app/services/dashboard_service.py`: repository-facing read model assembly.
+- `app/services/ui_data_service.py`: UI-facing contract adapter.
+- `app/pages/03_decision_dashboard.py`: presentation only.
+
+This keeps deterministic decision logic out of the UI layer.
