@@ -1,9 +1,19 @@
 from __future__ import annotations
 
+import html
 from typing import Any
 
 import pandas as pd
 import streamlit as st
+
+SIGNAL_TOOLTIPS: dict[str, str] = {
+    "Trend Slope": "Direction and magnitude of recent performance change.",
+    "Volatility Index": "Stability measure across recent signals.",
+    "Compliance Ratio": "Adherence to planned sessions over rolling window.",
+    "Muscle Balance Index": "Distribution balance across trained muscle groups.",
+    "Recovery Index": "Estimated recovery readiness level.",
+    "Progressive Overload Score": "Consistency of progressive training intensity.",
+}
 
 
 def inject_dashboard_css() -> None:
@@ -11,41 +21,152 @@ def inject_dashboard_css() -> None:
         """
         <style>
         .aphde-section {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1rem;
-            background: #ffffff;
-            margin-bottom: 1rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            border: 1px solid #d1d5db;
+            border-radius: 18px;
+            padding: 1.2rem;
+            background: #f8fafc;
+            margin-bottom: 1.1rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
         }
         .aphde-header {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 0.9rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 18px;
+            padding: 1rem 1.1rem;
             margin-bottom: 1rem;
-            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            background: #f8fafc;
         }
         .aphde-kpi-strip {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 0.8rem;
+            border: none;
+            padding: 0;
             margin-bottom: 1rem;
-            background: #ffffff;
+            background: transparent;
         }
         .aphde-governance {
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 1rem;
-            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            border: 1px solid #d1d5db;
+            border-radius: 18px;
+            padding: 1rem 1rem 1.2rem 1rem;
+            background: #f8fafc;
         }
         .aphde-hash {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
             font-size: 0.75rem;
             padding: 0.45rem 0.55rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             border-radius: 8px;
-            background: #f8fafc;
+            background: #f1f5f9;
             word-break: break-all;
+        }
+        .aphde-kpi-card {
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            background: #f8fafc;
+            padding: 1rem 1rem 0.8rem 1rem;
+            min-height: 170px;
+        }
+        .aphde-kpi-title {
+            color: #334155;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .aphde-kpi-value {
+            color: #0f172a;
+            font-size: 2.15rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.55rem;
+        }
+        .aphde-kpi-sub {
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        .aphde-pill {
+            display: inline-block;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.22rem 0.7rem;
+        }
+        .aphde-pill-ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .aphde-pill-info {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .aphde-pill-warn {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+        .aphde-rec-card {
+            border: 1px solid #d1d5db;
+            border-radius: 14px;
+            background: #f8fafc;
+            padding: 1.1rem;
+            margin-top: 0.85rem;
+        }
+        .aphde-rec-number {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #0f172a;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.8rem;
+            flex-shrink: 0;
+        }
+        .aphde-rec-title {
+            color: #0f172a;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+        .aphde-rec-text {
+            color: #334155;
+            font-size: 0.94rem;
+            margin-top: 0.45rem;
+        }
+        .aphde-rule-row {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .aphde-rule-row:last-child {
+            border-bottom: 0;
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 0.1rem;
+            background: #e5e7eb;
+            border-radius: 999px;
+            padding: 0.25rem;
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 999px;
+            height: 2.2rem;
+            padding: 0 1rem;
+            font-weight: 600;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #f8fafc !important;
+        }
+        .aphde-signal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.7rem;
+        }
+        .aphde-signal-table th, .aphde-signal-table td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.55rem 0.4rem;
+            text-align: left;
+            color: #1f2937;
+            font-size: 0.9rem;
+        }
+        .aphde-signal-table th {
+            color: #6b7280;
+            font-size: 0.82rem;
+            font-weight: 600;
         }
         </style>
         """,
@@ -53,41 +174,93 @@ def inject_dashboard_css() -> None:
     )
 
 
-def render_page_header() -> None:
-    st.markdown(
-        """
-        <div class="aphde-header">
-            <div style="font-size:1.1rem; font-weight:600; color:#0f172a;">Decision Dashboard</div>
-            <div style="font-size:0.9rem; color:#475569; margin-top:0.2rem;">
-                Deterministic decision outputs with diagnostic and governance observability.
-            </div>
+def _pill(text: str, cls: str) -> str:
+    return f'<span class="aphde-pill {cls}">{html.escape(text)}</span>'
+
+
+def _kpi_card(title: str, value: str, subline: str, pill: str | None = None) -> str:
+    body = f"""
+        <div class="aphde-kpi-card">
+            <div class="aphde-kpi-title">{html.escape(title)}</div>
+            <div class="aphde-kpi-value">{html.escape(value)}</div>
+            <div class="aphde-kpi-sub">{html.escape(subline)}</div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    """
+    if pill:
+        body = body.replace("</div>\n        </div>", f"<div style='margin-top:0.55rem'>{pill}</div></div>")
+    return body
 
 
 def render_metric_row(*, latest: dict[str, Any], governance: dict[str, Any], confidence_version: str, context_version: str) -> None:
-    st.markdown('<div class="aphde-kpi-strip">', unsafe_allow_html=True)
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Alignment Score", f"{latest['alignment_score']:.2f}")
-    m2.metric("Alignment Confidence", f"{latest['alignment_confidence']:.2f}")
-    m3.metric("Risk Score", f"{latest['risk_score']:.2f}")
-    m4.metric("Determinism", governance["determinism_status"])
-    m5.metric("Context Applied", "Yes" if latest.get("context_applied") else "No")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(
+            _kpi_card("Alignment Score", f"{latest['alignment_score']:.0f}", "Composite alignment quality"),
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            _kpi_card("Alignment Confidence", f"{latest['alignment_confidence'] * 100:.0f}%", "Model certainty"),
+            unsafe_allow_html=True,
+        )
+    with c3:
+        st.markdown(
+            _kpi_card("Risk Score", f"{latest['risk_score']:.0f}", "Lower is better"),
+            unsafe_allow_html=True,
+        )
+    with c4:
+        context_text = "Yes" if latest.get("context_applied") else "No"
+        context_cls = "aphde-pill-info" if latest.get("context_applied") else "aphde-pill-warn"
+        st.markdown(
+            _kpi_card("Context Applied", context_text, "Context modulation status", _pill(context_text, context_cls)),
+            unsafe_allow_html=True,
+        )
     st.caption(
-        f"Engine: {latest.get('engine_version','v1')} | "
-        f"Confidence: {confidence_version} | Context: {context_version} | "
-        f"Domain: {governance['domain_name']} ({governance['domain_version']})"
+        f"engine={latest.get('engine_version','v1')} | confidence={confidence_version} | "
+        f"context={context_version} | domain={governance.get('domain_name','unknown')}/{governance.get('domain_version','unknown')}"
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_recommendations_section(rows: list[dict[str, Any]]) -> None:
     st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
     st.markdown("### Recommendations")
     if rows:
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        for idx, row in enumerate(rows[:6], start=1):
+            priority = int(row.get("Priority") or idx)
+            impact = "High Impact" if priority == 1 else ("Medium Impact" if priority <= 3 else "Low Impact")
+            impact_cls = "aphde-pill-warn" if priority == 1 else ("aphde-pill-info" if priority <= 3 else "aphde-pill-ok")
+            conf_val = row.get("Model Conf")
+            if conf_val is None:
+                conf_val = row.get("Base Conf")
+            if isinstance(conf_val, float):
+                conf_label = f"{conf_val * 100:.0f}% conf."
+            else:
+                conf_label = "n/a conf."
+
+            action = str(row.get("Action") or "No action specified")
+            effect = str(row.get("Expected Effect") or "")
+            category = str(row.get("Category") or "")
+            reasons = str(row.get("Reasons") or "")
+
+            rec_html = f"""
+            <div class="aphde-rec-card">
+              <div style="display:flex; justify-content:space-between; gap:1rem;">
+                <div style="display:flex; align-items:flex-start;">
+                  <div class="aphde-rec-number">{idx}</div>
+                  <div>
+                    <div class="aphde-rec-title">{html.escape(action)}</div>
+                    <div class="aphde-rec-text">{html.escape(effect or category or "Recommendation from deterministic rules.")}</div>
+                    <div class="aphde-rec-text" style="font-size:0.83rem; color:#64748b;">{html.escape(reasons)}</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.45rem; white-space:nowrap;">
+                  {_pill(impact, impact_cls)}
+                  {_pill(conf_label, "aphde-pill-info")}
+                </div>
+              </div>
+            </div>
+            """
+            st.markdown(rec_html, unsafe_allow_html=True)
     else:
         st.info("No recommendations for the current run.")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -99,100 +272,155 @@ def render_operational_view(
     governance: dict[str, Any],
     recommendation_rows: list[dict[str, Any]],
 ) -> None:
-    left, right = st.columns([2, 1])
-
-    with left:
-        render_recommendations_section(recommendation_rows)
-
-    with right:
-        st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
-        st.markdown("### Run Snapshot")
-        st.write(f"Decision ID: `{latest.get('id', 'n/a')}`")
-        st.write(f"Engine Version: `{latest.get('engine_version', 'unknown')}`")
-        st.write(f"Determinism: `{governance.get('determinism_status', 'Unknown')}`")
-        st.write(f"Context Applied: `{'Yes' if latest.get('context_applied') else 'No'}`")
-        top_rec = recommendation_rows[0] if recommendation_rows else None
-        if top_rec:
-            st.markdown("#### Top Recommendation")
-            st.write(f"Priority: `{top_rec.get('Priority')}`")
-            st.write(top_rec.get("Action", "No action text available."))
-            st.caption(f"Category: {top_rec.get('Category', 'n/a')}")
-        else:
-            st.info("No recommendation generated for this run.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
-    st.markdown("### Operational Signals")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Alignment Score", f"{latest.get('alignment_score', 0.0):.2f}")
-    c2.metric("Alignment Confidence", f"{latest.get('alignment_confidence', 0.0):.2f}")
-    c3.metric("Risk Score", f"{latest.get('risk_score', 0.0):.2f}")
-    st.markdown("</div>", unsafe_allow_html=True)
+    _ = latest, governance
+    render_recommendations_section(recommendation_rows)
 
 
 def render_diagnostics_tabs(*, confidence_breakdown: dict[str, Any], context_json: dict[str, Any], context_notes: list[str], trace: dict[str, Any]) -> None:
+    st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
+    st.markdown("### Diagnostics")
     tab1, tab2, tab3, tab4 = st.tabs(["Signals", "Confidence Breakdown", "Context Details", "Score Breakdown"])
 
     with tab1:
-        st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
-        st.markdown("#### Computed Signals")
+        st.markdown("#### Signal Snapshot")
         computed_signals = trace.get("computed_signals", {}) if isinstance(trace, dict) else {}
+        values: dict[str, float] = {}
         if computed_signals:
-            signal_rows: list[dict[str, Any]] = []
             for key, value in computed_signals.items():
-                if isinstance(value, dict):
-                    for nested_key, nested_value in value.items():
-                        signal_rows.append(
-                            {
-                                "Signal": f"{key}.{nested_key}",
-                                "Value": nested_value,
-                            }
-                        )
-                else:
-                    signal_rows.append({"Signal": key, "Value": value})
-            st.dataframe(pd.DataFrame(signal_rows), use_container_width=True, hide_index=True)
+                if isinstance(value, (int, float)):
+                    normalized = float(value)
+                    if "volatility" in key:
+                        normalized = max(0.0, min(100.0, (1.0 - normalized) * 100.0))
+                    elif normalized <= 1.0:
+                        normalized = normalized * 100.0
+                    values[key.replace("_", " ").title()] = round(normalized, 2)
+            if values:
+                sig_df = pd.DataFrame(
+                    [{"Signal": k, "Score": v} for k, v in values.items()]
+                ).set_index("Signal")
+                st.bar_chart(sig_df)
+                table_rows = []
+                for signal_name, score in values.items():
+                    tooltip = SIGNAL_TOOLTIPS.get(signal_name, "Derived deterministic signal.")
+                    table_rows.append(
+                        f"<tr><td title='{html.escape(tooltip)}'>{html.escape(signal_name)}</td><td>{score:.2f}</td></tr>"
+                    )
+                st.markdown(
+                    """
+                    <table class="aphde-signal-table">
+                        <thead><tr><th>Signal</th><th>Score</th></tr></thead>
+                        <tbody>
+                    """
+                    + "".join(table_rows)
+                    + """
+                        </tbody>
+                    </table>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                st.caption("Hover over each signal name for definition.")
+            else:
+                st.info("No numeric signal values available in this trace.")
         else:
             st.info("No computed signals available in this trace.")
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with tab2:
-        st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
         st.markdown("#### Confidence Breakdown")
-        st.json(confidence_breakdown or {})
+        components = confidence_breakdown.get("components", {}) if isinstance(confidence_breakdown, dict) else {}
+        weights = confidence_breakdown.get("weights", {}) if isinstance(confidence_breakdown, dict) else {}
+        if components:
+            for key, val in components.items():
+                pct = max(0.0, min(100.0, float(val) * 100.0))
+                w = weights.get(key)
+                left, right = st.columns([6, 1])
+                left.markdown(f"**{key.replace('_', ' ').title()}**")
+                right.markdown(f"**{pct:.0f}%**")
+                st.progress(int(round(pct)))
+                if w is not None:
+                    st.caption(f"w: {float(w):.2f}")
+            weighted = confidence_breakdown.get("confidence")
+            if weighted is not None:
+                st.markdown("---")
+                st.markdown(f"### Weighted Average: `{float(weighted) * 100:.0f}%`")
+        else:
+            st.caption("No confidence component breakdown available.")
         notes = trace.get("confidence_notes", []) if isinstance(trace, dict) else []
         if notes:
             st.markdown("#### Confidence Notes")
             for note in notes:
                 st.write(f"- {note}")
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with tab3:
-        st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-        c1.markdown("#### Modulated Thresholds")
-        c2.markdown("#### Penalty Scalars")
-        c3.markdown("#### Tolerance Adjustments")
-        c1.json(context_json.get("modulated_thresholds", {}))
-        c2.json(context_json.get("penalty_scalars", {}))
-        c3.json(context_json.get("tolerance_adjustments", {}))
+        st.markdown("#### Context Details")
+        metadata = context_json.get("metadata", {}) if isinstance(context_json, dict) else {}
+        context_rows = [
+            ("Time Window", "7 days", True),
+            ("User Profile", "Active Adult", True),
+            ("Environmental", metadata.get("source", "Not available"), bool(metadata)),
+            ("Seasonal Adjustment", metadata.get("season", "Not applied"), "season" in metadata),
+            ("Goal Alignment", metadata.get("phase", "Maintenance"), bool(metadata)),
+        ]
+        for label, value, applied in context_rows:
+            pill = _pill("Applied", "aphde-pill-ok") if applied else _pill("Not Applied", "aphde-pill-info")
+            st.markdown(
+                f"""
+                <div class="aphde-rule-row">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <div style="font-size:1.05rem; font-weight:600; color:#1e3a5f;">{html.escape(label)}</div>
+                      <div style="font-size:0.95rem; color:#334155;">{html.escape(str(value))}</div>
+                    </div>
+                    <div>{pill}</div>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with st.expander("Technical Trace"):
+            c1, c2, c3 = st.columns(3)
+            c1.markdown("#### Modulated Thresholds")
+            c2.markdown("#### Penalty Scalars")
+            c3.markdown("#### Tolerance Adjustments")
+            c1.json(context_json.get("modulated_thresholds", {}))
+            c2.json(context_json.get("penalty_scalars", {}))
+            c3.json(context_json.get("tolerance_adjustments", {}))
         if context_notes:
             st.markdown("#### Context Notes")
             for note in context_notes:
                 st.write(f"- {note}")
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with tab4:
-        st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
         st.markdown("#### Score Breakdown")
         score_breakdown = trace.get("score_breakdown", {}) if isinstance(trace, dict) else {}
         if score_breakdown:
-            st.dataframe(
-                pd.DataFrame(
-                    [{"Component": key, "Value": value} for key, value in score_breakdown.items()]
-                ),
-                use_container_width=True,
-                hide_index=True,
-            )
+            left_col, right_col = st.columns(2)
+            score_items = list(score_breakdown.items())
+            mid = max(1, len(score_items) // 2)
+            with left_col:
+                st.markdown("#### Alignment Components")
+                for key, value in score_items[:mid]:
+                    st.markdown(
+                        f"""
+                        <div class="aphde-rule-row">
+                            <span style="color:#334155;">{html.escape(key.replace('_', ' ').title())}</span>
+                            <span style="float:right; font-weight:700; color:#0f172a;">{value}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+            with right_col:
+                st.markdown("#### Risk Components")
+                for key, value in score_items[mid:]:
+                    st.markdown(
+                        f"""
+                        <div class="aphde-rule-row">
+                            <span style="color:#334155;">{html.escape(key.replace('_', ' ').title())}</span>
+                            <span style="float:right; font-weight:700; color:#0f172a;">{value}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
         else:
             st.info("No score breakdown present in this trace.")
 
@@ -204,9 +432,9 @@ def render_diagnostics_tabs(*, confidence_breakdown: dict[str, Any], context_jso
         else:
             st.info("No rules triggered in this run.")
 
-        with st.expander("Raw Trace"):
+        with st.expander("Technical Trace"):
             st.json(trace or {})
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_governance_panel(
@@ -219,38 +447,38 @@ def render_governance_panel(
     history_payload: dict[str, Any],
 ) -> None:
     st.markdown('<div class="aphde-governance">', unsafe_allow_html=True)
-    st.markdown("### Governance & Observability")
+    st.markdown("### Governance & Versioning")
     status = governance.get("determinism_status", "Unknown")
     if status == "Verified":
-        badge = "VERIFIED"
+        badge = _pill("Determinism Verified", "aphde-pill-ok")
     elif status == "Mismatch":
-        badge = "MISMATCH"
+        badge = _pill("Determinism Mismatch", "aphde-pill-warn")
     else:
-        badge = "UNKNOWN"
-
-    st.markdown(f"**Determinism Status Badge:** {badge}")
-
-    v1, v2, v3, v4 = st.columns(4)
-    v1.metric("Engine Version", str(latest.get("engine_version", "unknown")))
-    v2.metric("Confidence Version", str(confidence_version))
-    v3.metric("Context Version", str(context_version))
-    v4.metric("Domain Version", str(governance.get("domain_version", "unknown")))
+        badge = _pill("Determinism Unknown", "aphde-pill-info")
 
     g1, g2 = st.columns(2)
     with g1:
-        st.markdown("**Output Hash**")
-        st.markdown(f'<div class="aphde-hash">{governance.get("output_hash","")}</div>', unsafe_allow_html=True)
-        st.markdown("**Input Signature Hash**")
-        st.markdown(
-            f'<div class="aphde-hash">{governance.get("input_signature_hash","")}</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown("#### Version Information")
+        st.markdown(f"Engine Version: `{latest.get('engine_version', 'unknown')}`")
+        st.markdown(f"Confidence Version: `{confidence_version}`")
+        st.markdown(f"Context Version: `{context_version}`")
+        st.markdown(f"Domain Version: `{governance.get('domain_version', 'unknown')}`")
     with g2:
-        st.write(f"Determinism Status: `{governance.get('determinism_status')}`")
-        st.write(f"Determinism Reason: `{governance.get('determinism_reason')}`")
-        st.write(f"Baseline Decision ID: `{governance.get('baseline_decision_id')}`")
-        st.write(f"Domain: `{governance.get('domain_name', 'unknown')}`")
+        st.markdown("#### Output Verification")
+        st.markdown("**Output Hash (SHA-256)**")
+        st.markdown(f'<div class="aphde-hash">{governance.get("output_hash","")}</div>', unsafe_allow_html=True)
+        with st.expander("Governance Details"):
+            st.markdown("<div style='margin-top:0.35rem;'>" + badge + "</div>", unsafe_allow_html=True)
+            st.caption(
+                f"reason={governance.get('determinism_reason', 'n/a')} | baseline={governance.get('baseline_decision_id', 'n/a')}"
+            )
+            st.markdown("**Input Signature Hash**")
+            st.markdown(
+                f'<div class="aphde-hash">{governance.get("input_signature_hash","")}</div>',
+                unsafe_allow_html=True,
+            )
 
+    st.markdown("---")
     st.markdown("#### Version Diff")
     if diff_payload is None:
         st.info("Select two different runs to view diff.")
@@ -278,8 +506,16 @@ def render_governance_panel(
             else:
                 st.write("None")
 
-        st.markdown("**Context Changes**")
-        st.json(diff_payload.get("context_changes", {}))
+        context_changes = diff_payload.get("context_changes", {})
+        context_applied_to = bool(context_changes.get("context_applied_to", False))
+        context_applied_from = bool(context_changes.get("context_applied_from", False))
+        compared = "Yes" if context_applied_from != context_applied_to else "No"
+        st.markdown("**Context Summary**")
+        st.markdown(f"- Context Applied: {'Yes' if context_applied_to else 'No'}")
+        st.markdown(f"- Context Version: {context_changes.get('context_version_to', 'n/a')}")
+        st.markdown(f"- Compared To Baseline: {compared}")
+        with st.expander("Technical Trace"):
+            st.json(diff_payload)
 
     st.markdown("#### History Analytics")
     h1, h2, h3 = st.columns(3)

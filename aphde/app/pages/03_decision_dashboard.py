@@ -8,8 +8,8 @@ from app.components.dashboard_sections import (
     render_governance_panel,
     render_metric_row,
     render_operational_view,
-    render_page_header,
 )
+from app.ui.layout import render_page_header
 from app.services.dashboard_service import (
     trigger_evaluation,
 )
@@ -19,13 +19,16 @@ from app.utils import DB_PATH, bootstrap_db_and_user
 
 user_id = bootstrap_db_and_user()
 inject_dashboard_css()
-render_page_header()
+render_page_header(
+    title="Decision Dashboard",
+    subtitle="Review deterministic evaluation outputs, diagnostics, and governance state.",
+)
 
 left, right = st.columns([1, 3])
 with left:
     run_button = st.button("Run Evaluation", type="primary", use_container_width=True)
 with right:
-    st.caption("Run and inspect deterministic outputs across operational, diagnostic, and governance views.")
+    st.caption("Run and inspect deterministic outputs across recommendations, diagnostics, and governance.")
 
 if run_button:
     with st.spinner("Running evaluation..."):
@@ -67,43 +70,38 @@ render_metric_row(
     context_version=context_version,
 )
 
-op_tab, diag_tab, gov_tab = st.tabs(["Operational View", "Diagnostic View", "Governance View"])
+render_operational_view(
+    latest=latest,
+    governance=governance,
+    recommendation_rows=recommendation_rows,
+)
 
-with op_tab:
-    render_operational_view(
-        latest=latest,
-        governance=governance,
-        recommendation_rows=recommendation_rows,
-    )
+render_diagnostics_tabs(
+    confidence_breakdown=confidence_breakdown,
+    context_json=context_json,
+    context_notes=context_notes,
+    trace=trace,
+)
 
-with diag_tab:
-    render_diagnostics_tabs(
-        confidence_breakdown=confidence_breakdown,
-        context_json=context_json,
-        context_notes=context_notes,
-        trace=trace,
-    )
+diff_payload = None
+st.markdown("### Run Comparison")
+if len(recent_runs) >= 2:
+    options = [int(item["id"]) for item in recent_runs]
+    c1, c2 = st.columns(2)
+    with c1:
+        run_a_id = st.selectbox("Base run", options=options, index=min(1, len(options) - 1), key="run_a_id")
+    with c2:
+        run_b_id = st.selectbox("Compare run", options=options, index=0, key="run_b_id")
+    if run_a_id != run_b_id:
+        diff_payload = load_run_diff(recent_runs=recent_runs, run_a_id=run_a_id, run_b_id=run_b_id)
+else:
+    st.info("Need at least two runs for version comparison.")
 
-with gov_tab:
-    diff_payload = None
-    st.markdown("### Run Comparison")
-    if len(recent_runs) >= 2:
-        options = [int(item["id"]) for item in recent_runs]
-        c1, c2 = st.columns(2)
-        with c1:
-            run_a_id = st.selectbox("Base run", options=options, index=min(1, len(options) - 1), key="run_a_id")
-        with c2:
-            run_b_id = st.selectbox("Compare run", options=options, index=0, key="run_b_id")
-        if run_a_id != run_b_id:
-            diff_payload = load_run_diff(recent_runs=recent_runs, run_a_id=run_a_id, run_b_id=run_b_id)
-    else:
-        st.info("Need at least two runs for version comparison.")
-
-    render_governance_panel(
-        governance=governance,
-        latest=latest,
-        confidence_version=confidence_version,
-        context_version=context_version,
-        diff_payload=diff_payload,
-        history_payload=history_payload,
-    )
+render_governance_panel(
+    governance=governance,
+    latest=latest,
+    confidence_version=confidence_version,
+    context_version=context_version,
+    diff_payload=diff_payload,
+    history_payload=history_payload,
+)
