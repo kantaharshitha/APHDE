@@ -8,7 +8,7 @@ from app.components.dashboard_sections import (
     render_metric_row,
     render_operational_view,
 )
-from app.ui.layout import render_page_header
+from app.ui.layout import render_page_header, render_sidebar_navigation
 from app.services.dashboard_service import (
     trigger_evaluation,
 )
@@ -17,6 +17,7 @@ from app.utils import DB_PATH, bootstrap_db_and_user
 
 
 user_id = bootstrap_db_and_user()
+render_sidebar_navigation(current_page="decision_dashboard", db_path=str(DB_PATH), user_id=user_id)
 inject_dashboard_css()
 render_page_header(
     title="Decision Dashboard",

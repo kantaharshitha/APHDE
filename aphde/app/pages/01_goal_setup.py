@@ -5,7 +5,7 @@ from typing import Any
 
 import streamlit as st
 
-from app.ui.layout import render_page_header
+from app.ui.layout import render_page_header, render_sidebar_navigation
 from app.utils import DB_PATH, bootstrap_db_and_user
 from core.data.db import get_connection
 from core.data.repositories.goal_repo import GoalRepository
@@ -131,11 +131,6 @@ def inject_goal_page_css() -> None:
         .cfg-badge-warning { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
         .cfg-meta { color: #6B7280; font-size: 0.86rem; line-height: 1.5; }
         .cfg-meta strong { color: #374151; font-weight: 600; }
-        div[data-testid="stVerticalBlock"] div[data-testid="stContainer"] {
-            background: #FFFFFF;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-        }
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] { background: #4B5563; border: 1px solid #374151; }
         div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child { background: #D1D5DB; }
         div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:nth-child(2) { background: #6B7280; }
@@ -304,7 +299,7 @@ def render_version_metadata() -> None:
 
 
 def render_activate_button(*, user_id: int, goal_type: GoalType, thresholds: dict[str, float]) -> None:
-    st.markdown(" ")
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("Activate Goal", type="primary", use_container_width=True, key="activate_goal_btn"):
         with get_connection(DB_PATH) as conn:
             goal_repo = GoalRepository(conn)
@@ -336,6 +331,7 @@ def render_current_goal(user_id: int) -> None:
 
 def main() -> None:
     user_id = bootstrap_db_and_user()
+    render_sidebar_navigation(current_page="goal_setup", db_path=str(DB_PATH), user_id=user_id)
     inject_goal_page_css()
 
     with get_connection(DB_PATH) as conn:

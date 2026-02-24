@@ -3,7 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 from app.services.action_center_service import load_action_center_view
-from app.ui.layout import render_page_header
+from app.ui.layout import render_page_header, render_sidebar_navigation
 from app.utils import DB_PATH, bootstrap_db_and_user
 
 st.set_page_config(page_title="Action Center", layout="wide")
@@ -13,109 +13,143 @@ def inject_action_center_css() -> None:
     st.markdown(
         """
         <style>
-        .ac-section {
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            background: #FFFFFF;
-            padding: 1rem 1rem 0.9rem 1rem;
-            margin-bottom: 1rem;
-        }
-        .ac-hero-title {
+        .ac-head {
             color: #1F2937;
-            font-size: 1.4rem;
+            font-size: 1.28rem;
             font-weight: 700;
-            margin-bottom: 0.3rem;
+            text-align: center;
+            margin-bottom: 0.8rem;
         }
-        .ac-text {
+        .ac-main-action {
+            color: #111827;
+            font-size: 1.42rem;
+            font-weight: 700;
+            line-height: 1.25;
+            margin-bottom: 0.45rem;
+        }
+        .ac-body {
             color: #374151;
             font-size: 0.95rem;
+            line-height: 1.45;
         }
         .ac-chip {
             display: inline-block;
-            padding: 0.2rem 0.62rem;
+            padding: 0.19rem 0.62rem;
             border-radius: 999px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
             margin-right: 0.35rem;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.3rem;
         }
-        .ac-chip-info { background: #DBEAFE; color: #1D4ED8; border: 1px solid #BFDBFE; }
-        .ac-chip-ok { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-        .ac-chip-warn { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .ac-chip-high { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .ac-chip-info { background: #E8F0FE; color: #1D4ED8; border: 1px solid #CBDCFB; }
+        .ac-chip-impact-low { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+        .ac-chip-impact-med { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .ac-chip-impact-high { background: #FFEDD5; color: #9A3412; border: 1px solid #FED7AA; }
+        .ac-muted {
+            color: #6B7280;
+            font-size: 0.86rem;
+            margin-top: 0.45rem;
+        }
+        .ac-risk-title {
+            color: #1F2937;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
 
-def _severity_chip(severity: str) -> str:
-    severity = severity.lower().strip()
-    if severity == "high":
-        return '<span class="ac-chip ac-chip-high">High Severity</span>'
-    if severity == "medium":
-        return '<span class="ac-chip ac-chip-warn">Medium Severity</span>'
-    return '<span class="ac-chip ac-chip-ok">Low Severity</span>'
+def _impact_chip(severity: str) -> str:
+    sev = str(severity).lower().strip()
+    if sev == "high":
+        return '<span class="ac-chip ac-chip-impact-high">High Impact</span>'
+    if sev == "medium":
+        return '<span class="ac-chip ac-chip-impact-med">Moderate Impact</span>'
+    return '<span class="ac-chip ac-chip-impact-low">Low Impact</span>'
 
 
-def render_tomorrow_plan(plan: dict | None) -> None:
-    st.markdown('<div class="ac-section">', unsafe_allow_html=True)
-    st.markdown("### Tomorrow Plan")
-    if not plan:
-        st.info("No action plan available yet. Run an evaluation first.")
-        st.markdown("</div>", unsafe_allow_html=True)
-        return
-
-    st.markdown(f'<div class="ac-hero-title">{plan.get("action", "No action available")}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="ac-text">{plan.get("expected_impact", "")}</div>', unsafe_allow_html=True)
-    st.markdown(" ")
-
-    confidence = float(plan.get("confidence", 0.0))
-    severity = str(plan.get("severity", "low"))
-    st.markdown(
-        f"""
-        <span class="ac-chip ac-chip-info">Confidence: {confidence * 100:.0f}%</span>
-        {_severity_chip(severity)}
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("#### Priority Reasoning")
-    st.write(plan.get("reason", "No reason available."))
-    st.caption(f"Action ID: {plan.get('action_id', 'n/a')} | Priority Score: {float(plan.get('priority_score', 0.0)):.4f}")
-    st.markdown("</div>", unsafe_allow_html=True)
+def _risk_explanation(level: str) -> str:
+    level_norm = str(level).lower().strip()
+    if level_norm == "high":
+        return "Training fatigue is accumulating faster than recovery."
+    if level_norm == "moderate":
+        return "Multiple stress signals detected."
+    if level_norm == "low":
+        return "Minor stress signals are present but currently manageable."
+    return "System stable. No elevated stress signals detected."
 
 
-def render_risk_alert(alert: dict | None) -> None:
-    if not alert:
-        return
-    chip = "ac-chip-high" if alert.get("severity") == "high" else "ac-chip-warn"
-    st.markdown('<div class="ac-section">', unsafe_allow_html=True)
-    st.markdown("### Active Risk Alert")
-    st.markdown(f'<span class="ac-chip {chip}">{str(alert.get("severity", "")).title()} Risk</span>', unsafe_allow_html=True)
-    st.write(alert.get("message", "Risk condition present."))
-    rules = alert.get("rules", [])
-    if rules:
-        st.caption("Triggered rules: " + ", ".join(str(r) for r in rules))
-    st.markdown("</div>", unsafe_allow_html=True)
+def render_tomorrows_plan(plan: dict | None) -> None:
+    with st.container(border=True):
+        st.markdown('<div class="ac-head">Tomorrow\'s Plan</div>', unsafe_allow_html=True)
+        if not plan:
+            st.info("No action plan available yet. Run an evaluation first.")
+            return
+
+        st.markdown(
+            f'<div class="ac-main-action">{plan.get("action", "No action available.")}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="ac-body">{plan.get("reason", "No explanation available.")}</div>',
+            unsafe_allow_html=True,
+        )
+
+        confidence = float(plan.get("confidence", 0.0))
+        severity = str(plan.get("severity", "low"))
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            f'<span class="ac-chip ac-chip-info">Confidence {confidence * 100:.0f}%</span>{_impact_chip(severity)}',
+            unsafe_allow_html=True,
+        )
+        st.markdown('<div class="ac-muted">Apply for 7 days, then reassess.</div>', unsafe_allow_html=True)
+
+
+def render_current_risk(alert: dict | None) -> None:
+    with st.container(border=True):
+        st.markdown('<div class="ac-risk-title">Current Risk Level</div>', unsafe_allow_html=True)
+        if not alert:
+            level = "Stable"
+            explanation = _risk_explanation(level)
+        else:
+            level = str(alert.get("level", "Moderate"))
+            explanation = str(alert.get("message") or _risk_explanation(level))
+        st.markdown(f"Current Risk Level: **{level}**")
+        st.caption(explanation)
+
+
+def render_why_this_action(summary: dict | None) -> None:
+    with st.expander("Why this action?"):
+        if not summary:
+            st.caption("No additional rationale available.")
+            return
+        st.markdown(f"- {summary.get('recovery_summary', 'Recovery trend unavailable.')}")
+        st.markdown(f"- {summary.get('rpe_summary', 'RPE trend unavailable.')}")
+        st.markdown(f"- {summary.get('compliance_summary', 'Compliance trend unavailable.')}")
 
 
 def render_technical_trace(view: dict) -> None:
-    with st.expander("Technical Trace (Advanced)"):
-        st.write("Latest run snapshot")
-        st.json(view.get("latest") or {})
-        st.write("Tomorrow plan payload")
-        st.json(view.get("tomorrow_plan") or {})
-        st.write("Risk alert payload")
-        st.json(view.get("risk_alert") or {})
+    plan = view.get("tomorrow_plan") or {}
+    latest = view.get("latest") or {}
+    trace = latest.get("trace", {}) if isinstance(latest.get("trace"), dict) else {}
+    with st.expander("Technical Trace (Advanced)", expanded=False):
+        st.markdown(f"- Action ID: `{plan.get('action_id', 'n/a')}`")
+        st.markdown(f"- Priority Score: `{float(plan.get('priority_score', 0.0)):.4f}`")
+        st.markdown(f"- Internal rule codes: `{', '.join(trace.get('triggered_rules', [])) if trace else 'none'}`")
+        st.write("Raw signal values")
+        st.json(trace.get("computed_signals", {}) if trace else {})
 
 
 def main() -> None:
     user_id = bootstrap_db_and_user()
+    render_sidebar_navigation(current_page="action_center", db_path=str(DB_PATH), user_id=user_id)
     inject_action_center_css()
     render_page_header(
         title="Action Center",
-        subtitle="Deterministic guidance for the next best action.",
+        subtitle="Clear, deterministic guidance for what to do next.",
     )
 
     try:
@@ -125,12 +159,18 @@ def main() -> None:
         st.stop()
 
     if view.get("latest") is None:
-        st.info("No evaluation runs found. Add logs and run evaluation to generate tomorrow guidance.")
+        st.info("No evaluation runs found. Add logs and run evaluation to generate guidance.")
         render_technical_trace(view)
         return
 
-    render_tomorrow_plan(view.get("tomorrow_plan"))
-    render_risk_alert(view.get("risk_alert"))
+    # Required hierarchy:
+    # 1) Tomorrow's plan
+    # 2) Current risk level
+    # 3) Why this action? (expandable)
+    # 4) Technical trace (collapsed)
+    render_tomorrows_plan(view.get("tomorrow_plan"))
+    render_current_risk(view.get("risk_alert"))
+    render_why_this_action(view.get("why_this_action"))
     render_technical_trace(view)
 
 

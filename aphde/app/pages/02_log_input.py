@@ -6,7 +6,7 @@ from typing import Any
 
 import streamlit as st
 
-from app.ui.layout import render_page_header
+from app.ui.layout import render_page_header, render_sidebar_navigation
 from app.utils import DB_PATH, bootstrap_db_and_user
 from core.data.db import get_connection
 from core.data.repositories.calorie_repo import CalorieLogRepository
@@ -35,11 +35,6 @@ def inject_log_page_css() -> None:
         .log-meta { color: #6B7280; font-size: 0.88rem; }
         .tile-caption { color: #6B7280; font-size: 0.82rem; line-height: 1.25; }
         .tile-focus { color: #1F2937; font-weight: 600; font-size: 0.92rem; margin-bottom: 0.22rem; }
-        div[data-testid="stVerticalBlock"] div[data-testid="stContainer"] {
-            background: #FFFFFF;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-        }
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
             background: #4B5563;
             border: 1px solid #374151;
@@ -217,7 +212,7 @@ def render_system_snapshot(*, weight_count: int, calorie_count: int, workout_cou
 
 
 def render_commit_button(*, user_id: int) -> None:
-    st.markdown(" ")
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("Commit Log Entry", type="primary", use_container_width=True, key="commit_log_entry"):
         log_date = st.session_state["log_date"]
         phase = st.session_state.get("cycle_phase", "")
@@ -290,6 +285,7 @@ def load_snapshot_data(*, user_id: int) -> dict[str, Any]:
 
 def main() -> None:
     user_id = bootstrap_db_and_user()
+    render_sidebar_navigation(current_page="log_input", db_path=str(DB_PATH), user_id=user_id)
     inject_log_page_css()
     init_state()
 
