@@ -110,11 +110,13 @@ def _navigate(page_path: str) -> None:
 
 def render_quick_actions() -> None:
     st.markdown("### Quick Actions")
-    cols = st.columns(3)
+    cols = st.columns(5)
     items = [
         ("Configure Goal", "Set optimization strategy and thresholds.", "pages/01_goal_setup.py"),
         ("Log Input", "Capture structured daily logs for evaluation.", "pages/02_log_input.py"),
+        ("Action Center", "See the single prioritized tomorrow action.", "pages/04_action_center.py"),
         ("Decision Dashboard", "Review alignment, recommendations, and governance.", "pages/03_decision_dashboard.py"),
+        ("Insights & Trends", "Analyze weekly patterns, drift, and stagnation alerts.", "pages/05_insights_trends.py"),
     ]
     for col, (title, desc, page) in zip(cols, items, strict=True):
         with col:

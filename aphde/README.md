@@ -124,7 +124,9 @@ cd aphde
 1. **Homepage**: quick navigation and active-goal overview.
 2. **Goal Configuration**: select strategy and configure thresholds.
 3. **Log Input**: stage biometrics/training/context and commit once.
-4. **Decision Dashboard**: inspect scoring, recommendations, diagnostics, and governance.
+4. **Decision Dashboard**: operational snapshot (alignment, confidence, risk, top recommendation, signals/context summary).
+5. **Action Center**: deterministic “Tomorrow Plan” guidance.
+6. **Insights & Trends**: weekly insights, stagnation alerts, drift detection, and trend charts.
 
 Typical run path:
 
@@ -184,6 +186,7 @@ decision_id = run_evaluation(
 - `docs/release-notes-v4.md`
 - `docs/release-notes-v5.md`
 - `docs/release-notes-v5.1-ui-modernization.md`
+- `docs/release-notes-v6-behavioral-guidance.md`
 
 ## Troubleshooting
 

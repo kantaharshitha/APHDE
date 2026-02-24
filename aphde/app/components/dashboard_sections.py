@@ -276,6 +276,63 @@ def render_operational_view(
     render_recommendations_section(recommendation_rows)
 
 
+def render_dashboard_operational_insights(*, trace: dict[str, Any], context_json: dict[str, Any], context_version: str) -> None:
+    st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
+    st.markdown("### Signals")
+    computed_signals = trace.get("computed_signals", {}) if isinstance(trace, dict) else {}
+    values: dict[str, float] = {}
+    if computed_signals:
+        for key, value in computed_signals.items():
+            if isinstance(value, (int, float)):
+                normalized = float(value)
+                if "volatility" in key:
+                    normalized = max(0.0, min(100.0, (1.0 - normalized) * 100.0))
+                elif normalized <= 1.0:
+                    normalized = normalized * 100.0
+                values[key.replace("_", " ").title()] = round(normalized, 2)
+        if values:
+            table_rows = []
+            for signal_name, score in values.items():
+                tooltip = SIGNAL_TOOLTIPS.get(signal_name, "Derived deterministic signal.")
+                table_rows.append(
+                    f"<tr><td title='{html.escape(tooltip)}'>{html.escape(signal_name)}</td><td>{score:.2f}</td></tr>"
+                )
+            st.markdown(
+                """
+                <table class="aphde-signal-table">
+                    <thead><tr><th>Signal</th><th>Score</th></tr></thead>
+                    <tbody>
+                """
+                + "".join(table_rows)
+                + """
+                    </tbody>
+                </table>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.caption("Hover over each signal name for definition.")
+        else:
+            st.info("No numeric signal values available in this trace.")
+    else:
+        st.info("No computed signals available in this trace.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
+    st.markdown("### Context Summary")
+    metadata = context_json.get("metadata", {}) if isinstance(context_json, dict) else {}
+    applied = bool(metadata and metadata.get("context_type"))
+    st.markdown(f"- Context Applied: {'Yes' if applied else 'No'}")
+    st.markdown(f"- Context Version: {context_version}")
+    if metadata:
+        phase = metadata.get("phase")
+        context_type = metadata.get("context_type")
+        if context_type is not None:
+            st.markdown(f"- Context Type: {context_type}")
+        if phase is not None:
+            st.markdown(f"- Phase: {phase}")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_diagnostics_tabs(*, confidence_breakdown: dict[str, Any], context_json: dict[str, Any], context_notes: list[str], trace: dict[str, Any]) -> None:
     st.markdown('<div class="aphde-section">', unsafe_allow_html=True)
     st.markdown("### Diagnostics")
