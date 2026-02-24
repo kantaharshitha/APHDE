@@ -33,11 +33,34 @@ Given structured behavioral logs (weight, calories, workouts, optional context),
 - `core/data/`: SQLite schema, migrations, repositories
 - `app/`: Streamlit UI (homepage, goal setup, log input, decision dashboard)
 
+Layering rule:
+
+- UI (`app/`) renders data and collects input.
+- Services/repositories (`core/data`, `core/services`) persist and retrieve state.
+- Engine/scoring/context/governance layers perform deterministic computation.
+- Domain module (`domains/health/`) provides domain-specific signals and strategies.
+
 Version triad is persisted per run:
 
 - `engine_version`
 - `confidence_version`
 - `context_version`
+
+## What Is In Scope vs Out of Scope
+
+In scope:
+
+- deterministic decision evaluation
+- explainable recommendations
+- confidence and context-aware interpretation
+- governance metadata (hashing, diffing, determinism verification)
+
+Out of scope:
+
+- ML prediction models
+- external API integrations
+- wearable integrations
+- authentication and multi-tenant user management
 
 ## Project Layout
 
@@ -89,12 +112,26 @@ cd aphde
 .venv\Scripts\python.exe -m scripts.run_demo_scenarios
 ```
 
+Run a single integration test file:
+
+```bash
+cd aphde
+.venv\Scripts\python.exe -m pytest tests/integration/test_run_evaluation.py -q
+```
+
 ## UI Workflow
 
 1. **Homepage**: quick navigation and active-goal overview.
 2. **Goal Configuration**: select strategy and configure thresholds.
 3. **Log Input**: stage biometrics/training/context and commit once.
 4. **Decision Dashboard**: inspect scoring, recommendations, diagnostics, and governance.
+
+Typical run path:
+
+1. Configure goal and thresholds.
+2. Commit one or more daily log entries.
+3. Open Decision Dashboard and run evaluation.
+4. Compare runs using governance diff and trend sections.
 
 ## Determinism and Governance
 
@@ -106,6 +143,18 @@ The system includes:
 - historical trend analysis for alignment/confidence/context/rules
 
 No scoring or confidence logic is performed in the UI layer.
+
+## High-Level Data Model (SQLite)
+
+Key persisted records:
+
+- `users`: local user identities
+- `goals`: active goal strategy and target thresholds
+- `weight_logs`, `calorie_logs`, `workout_logs`: structured behavioral logs
+- `context_inputs`: optional contextual modifiers (for example cycle phase)
+- `decision_runs`: scored outputs, trace, confidence/context/governance metadata
+
+All evaluation outputs are persisted, enabling reproducibility and historical analysis.
 
 ## Domain Injection Contract
 
@@ -135,3 +184,19 @@ decision_id = run_evaluation(
 - `docs/release-notes-v4.md`
 - `docs/release-notes-v5.md`
 - `docs/release-notes-v5.1-ui-modernization.md`
+
+## Troubleshooting
+
+If Streamlit does not start:
+
+1. Ensure dependencies are installed:  
+`.venv\Scripts\python.exe -m pip install -e .[dev]`
+2. Ensure you are inside `aphde/`.
+3. Start explicitly on a port:  
+`.venv\Scripts\python.exe -m streamlit run app/main.py --server.port 8501`
+
+If tests fail due to environment mismatch:
+
+1. Recreate venv.
+2. Reinstall with `-e .[dev]`.
+3. Re-run `pytest -q`.
