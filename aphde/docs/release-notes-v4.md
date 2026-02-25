@@ -2,7 +2,7 @@
 
 ## Release
 
-APHDE V4 introduces a domain-agnostic core refactor with behavior parity to V3.
+Stratify V4 introduces a domain-agnostic core refactor with behavior parity to V3.
 
 ## What Changed
 

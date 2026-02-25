@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Context Engine modulates interpretation parameters based on contextual state while keeping APHDE deterministic and explainable.
+The Context Engine modulates interpretation parameters based on contextual state while keeping Stratify deterministic and explainable.
 
 It does not:
 - change raw signals

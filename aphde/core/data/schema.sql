@@ -1,6 +1,11 @@
 ﻿CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    email TEXT UNIQUE,
+    password_hash TEXT,
+    display_name TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS goals (
@@ -90,3 +95,12 @@ CREATE TABLE IF NOT EXISTS decision_runs (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (goal_id) REFERENCES goals(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_goals_user_active_from ON goals(user_id, active_from);
+CREATE INDEX IF NOT EXISTS idx_weight_logs_user_log_date ON weight_logs(user_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_calorie_logs_user_log_date ON calorie_logs(user_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_workout_logs_user_log_date ON workout_logs(user_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_signal_snapshots_user_snapshot_date ON signal_snapshots(user_id, snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_context_inputs_user_log_date ON context_inputs(user_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_decision_runs_user_run_date ON decision_runs(user_id, run_date);
+

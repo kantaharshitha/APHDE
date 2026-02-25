@@ -1,8 +1,8 @@
-# APHDE Architecture (V5)
+# Stratify Architecture (V5)
 
 ## Overview
 
-APHDE V5 separates a domain-agnostic deterministic core from domain-specific implementations and adds governance observability around evaluation lifecycle.
+Stratify V5 separates a domain-agnostic deterministic core from domain-specific implementations and adds governance observability around evaluation lifecycle.
 
 Core responsibilities:
 - orchestration pipeline

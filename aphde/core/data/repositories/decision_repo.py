@@ -75,10 +75,10 @@ class DecisionRunRepository:
             (user_id,),
         ).fetchone()
 
-    def get_by_id(self, decision_id: int) -> sqlite3.Row | None:
+    def get_by_id(self, user_id: int, decision_id: int) -> sqlite3.Row | None:
         return self.conn.execute(
-            "SELECT * FROM decision_runs WHERE id = ? LIMIT 1",
-            (decision_id,),
+            "SELECT * FROM decision_runs WHERE user_id = ? AND id = ? LIMIT 1",
+            (user_id, decision_id),
         ).fetchone()
 
     def list_recent(self, user_id: int, limit: int = 10) -> list[sqlite3.Row]:

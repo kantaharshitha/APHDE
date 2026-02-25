@@ -1,8 +1,8 @@
 ﻿## Product Requirements Document (PRD) V3
-### Adaptive Personal Health Decision Engine (APHDE)
+### Stratify
 
 ## 1. Executive Summary
-APHDE V3 adds a **Modular Context Engine Layer** and a **UI flow redesign** while preserving deterministic, explainable, versioned architecture.
+Stratify V3 adds a **Modular Context Engine Layer** and a **UI flow redesign** while preserving deterministic, explainable, versioned architecture.
 
 V3 goals:
 1. Add context-aware interpretation without changing raw signals.

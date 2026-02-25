@@ -21,15 +21,15 @@ def inject_dashboard_css() -> None:
         """
         <style>
         .aphde-section {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             border-radius: 18px;
             padding: 1.2rem;
-            background: #f8fafc;
+            background: #ffffff;
             margin-bottom: 1.1rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
         }
         .aphde-header {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             border-radius: 18px;
             padding: 1rem 1.1rem;
             margin-bottom: 1rem;
@@ -42,29 +42,30 @@ def inject_dashboard_css() -> None:
             background: transparent;
         }
         .aphde-governance {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             border-radius: 18px;
             padding: 1rem 1rem 1.2rem 1rem;
-            background: #f8fafc;
+            background: #ffffff;
         }
         .aphde-hash {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
             font-size: 0.75rem;
             padding: 0.45rem 0.55rem;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            background: #f1f5f9;
+            background: #f8fafc;
             word-break: break-all;
+            color: #0f172a;
         }
         .aphde-kpi-card {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             border-radius: 16px;
-            background: #f8fafc;
+            background: #ffffff;
             padding: 1rem 1rem 0.8rem 1rem;
             min-height: 170px;
         }
         .aphde-kpi-title {
-            color: #334155;
+            color: #475569;
             font-size: 1.05rem;
             font-weight: 600;
             margin-bottom: 0.4rem;
@@ -88,21 +89,24 @@ def inject_dashboard_css() -> None:
             padding: 0.22rem 0.7rem;
         }
         .aphde-pill-ok {
-            background: #d1fae5;
-            color: #065f46;
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
         }
         .aphde-pill-info {
-            background: #dbeafe;
+            background: #eff6ff;
             color: #1d4ed8;
+            border: 1px solid #93c5fd;
         }
         .aphde-pill-warn {
-            background: #ffedd5;
+            background: #fff7ed;
             color: #c2410c;
+            border: 1px solid #fdba74;
         }
         .aphde-rec-card {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             border-radius: 14px;
-            background: #f8fafc;
+            background: #ffffff;
             padding: 1.1rem;
             margin-top: 0.85rem;
         }
@@ -131,14 +135,14 @@ def inject_dashboard_css() -> None:
         }
         .aphde-rule-row {
             padding: 0.6rem 0;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #f1f5f9;
         }
         .aphde-rule-row:last-child {
             border-bottom: 0;
         }
         .stTabs [data-baseweb="tab-list"] {
             gap: 0.1rem;
-            background: #e5e7eb;
+            background: #f1f5f9;
             border-radius: 999px;
             padding: 0.25rem;
         }
@@ -149,7 +153,7 @@ def inject_dashboard_css() -> None:
             font-weight: 600;
         }
         .stTabs [aria-selected="true"] {
-            background-color: #f8fafc !important;
+            background-color: #ffffff !important;
         }
         .aphde-signal-table {
             width: 100%;
@@ -157,14 +161,14 @@ def inject_dashboard_css() -> None:
             margin-top: 0.7rem;
         }
         .aphde-signal-table th, .aphde-signal-table td {
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #f1f5f9;
             padding: 0.55rem 0.4rem;
             text-align: left;
             color: #1f2937;
             font-size: 0.9rem;
         }
         .aphde-signal-table th {
-            color: #6b7280;
+            color: #475569;
             font-size: 0.82rem;
             font-weight: 600;
         }
@@ -419,8 +423,8 @@ def render_diagnostics_tabs(*, confidence_breakdown: dict[str, Any], context_jso
                     <div class="aphde-rule-row">
                       <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                          <div style="font-size:1.05rem; font-weight:600; color:#1e3a5f;">{html.escape(label)}</div>
-                          <div style="font-size:0.95rem; color:#334155;">{html.escape(str(value))}</div>
+                          <div style="font-size:1.05rem; font-weight:600; color:#0f172a;">{html.escape(label)}</div>
+                          <div style="font-size:0.95rem; color:#475569;">{html.escape(str(value))}</div>
                         </div>
                         <div>{pill}</div>
                       </div>
@@ -455,7 +459,7 @@ def render_diagnostics_tabs(*, confidence_breakdown: dict[str, Any], context_jso
                         st.markdown(
                             f"""
                             <div class="aphde-rule-row">
-                                <span style="color:#334155;">{html.escape(key.replace('_', ' ').title())}</span>
+                                <span style="color:#475569;">{html.escape(key.replace('_', ' ').title())}</span>
                                 <span style="float:right; font-weight:700; color:#0f172a;">{value}</span>
                             </div>
                             """,
@@ -467,7 +471,7 @@ def render_diagnostics_tabs(*, confidence_breakdown: dict[str, Any], context_jso
                         st.markdown(
                             f"""
                             <div class="aphde-rule-row">
-                                <span style="color:#334155;">{html.escape(key.replace('_', ' ').title())}</span>
+                                <span style="color:#475569;">{html.escape(key.replace('_', ' ').title())}</span>
                                 <span style="float:right; font-weight:700; color:#0f172a;">{value}</span>
                             </div>
                             """,

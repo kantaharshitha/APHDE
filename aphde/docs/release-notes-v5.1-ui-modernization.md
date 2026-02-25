@@ -1,7 +1,7 @@
 # Release Notes: v5.1.0 UI Modernization
 
 ## Summary
-This release modernizes the Streamlit dashboard to expose APHDE architecture depth across Operational, Diagnostic, and Governance views while preserving deterministic backend behavior.
+This release modernizes the Streamlit dashboard to expose Stratify architecture depth across Operational, Diagnostic, and Governance views while preserving deterministic backend behavior.
 
 ## Highlights
 - Added UI data contract adapter layer:

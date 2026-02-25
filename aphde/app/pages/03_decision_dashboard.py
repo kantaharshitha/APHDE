@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from app.auth_ui import require_authenticated_user
 from app.components.dashboard_sections import (
     render_dashboard_operational_insights,
     inject_dashboard_css,
@@ -13,10 +14,10 @@ from app.services.dashboard_service import (
     trigger_evaluation,
 )
 from app.services.ui_data_service import load_dashboard_view
-from app.utils import DB_PATH, bootstrap_db_and_user
+from app.utils import DB_PATH
 
 
-user_id = bootstrap_db_and_user()
+user_id = require_authenticated_user()
 render_sidebar_navigation(current_page="decision_dashboard", db_path=str(DB_PATH), user_id=user_id)
 inject_dashboard_css()
 render_page_header(

@@ -5,8 +5,9 @@ from typing import Any
 
 import streamlit as st
 
+from app.auth_ui import require_authenticated_user
 from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH, bootstrap_db_and_user
+from app.utils import DB_PATH
 from core.data.db import get_connection
 from core.data.repositories.goal_repo import GoalRepository
 from core.models.enums import GoalType
@@ -122,18 +123,18 @@ def inject_goal_page_css() -> None:
     st.markdown(
         """
         <style>
-        .cfg-card-title { color: #1F2937; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem; }
-        .cfg-card-body { color: #6B7280; font-size: 0.88rem; margin-bottom: 0.3rem; }
-        .cfg-focus { color: #4B5563; font-size: 0.84rem; font-weight: 600; }
+        .cfg-card-title { color: #0f172a; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .cfg-card-body { color: #475569; font-size: 0.88rem; margin-bottom: 0.3rem; }
+        .cfg-focus { color: #475569; font-size: 0.84rem; font-weight: 600; }
         .cfg-badge { display: inline-block; padding: 0.15rem 0.62rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
-        .cfg-badge-active { background: #DBEAFE; color: #1D4ED8; border: 1px solid #BFDBFE; }
-        .cfg-badge-success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-        .cfg-badge-warning { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .cfg-meta { color: #6B7280; font-size: 0.86rem; line-height: 1.5; }
-        .cfg-meta strong { color: #374151; font-weight: 600; }
-        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] { background: #4B5563; border: 1px solid #374151; }
-        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child { background: #D1D5DB; }
-        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:nth-child(2) { background: #6B7280; }
+        .cfg-badge-active { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+        .cfg-badge-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .cfg-badge-warning { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
+        .cfg-meta { color: #475569; font-size: 0.86rem; line-height: 1.5; }
+        .cfg-meta strong { color: #0f172a; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+        div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] { background: #0f172a; border: 1px solid #1e293b; }
+        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child { background: #cbd5e1; }
+        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:nth-child(2) { background: #475569; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -330,7 +331,7 @@ def render_current_goal(user_id: int) -> None:
 
 
 def main() -> None:
-    user_id = bootstrap_db_and_user()
+    user_id = require_authenticated_user()
     render_sidebar_navigation(current_page="goal_setup", db_path=str(DB_PATH), user_id=user_id)
     inject_goal_page_css()
 

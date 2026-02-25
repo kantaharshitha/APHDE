@@ -1,10 +1,10 @@
-# APHDE Workspace
+# Stratify Workspace
 
-This workspace contains the **Adaptive Personal Health Decision Engine (APHDE)** project under:
+This workspace contains the **Stratify** project under:
 
 - `aphde/`
 
-APHDE is a deterministic, explainable, versioned optimization framework demonstrated in the health domain.
+Stratify is a deterministic, explainable, versioned optimization framework demonstrated in the health domain.
 
 ## Start Here
 

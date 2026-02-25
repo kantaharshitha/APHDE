@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import streamlit as st
 
+from app.auth_ui import require_authenticated_user
 from app.services.action_center_service import load_action_center_view
 from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH, bootstrap_db_and_user
+from app.utils import DB_PATH
 
 st.set_page_config(page_title="Action Center", layout="wide")
 
@@ -14,21 +15,21 @@ def inject_action_center_css() -> None:
         """
         <style>
         .ac-head {
-            color: #1F2937;
+            color: #0f172a;
             font-size: 1.28rem;
             font-weight: 700;
             text-align: center;
             margin-bottom: 0.8rem;
         }
         .ac-main-action {
-            color: #111827;
+            color: #0f172a;
             font-size: 1.42rem;
             font-weight: 700;
             line-height: 1.25;
             margin-bottom: 0.45rem;
         }
         .ac-body {
-            color: #374151;
+            color: #475569;
             font-size: 0.95rem;
             line-height: 1.45;
         }
@@ -41,17 +42,17 @@ def inject_action_center_css() -> None:
             margin-right: 0.35rem;
             margin-bottom: 0.3rem;
         }
-        .ac-chip-info { background: #E8F0FE; color: #1D4ED8; border: 1px solid #CBDCFB; }
-        .ac-chip-impact-low { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-        .ac-chip-impact-med { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .ac-chip-impact-high { background: #FFEDD5; color: #9A3412; border: 1px solid #FED7AA; }
+        .ac-chip-info { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+        .ac-chip-impact-low { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; }
+        .ac-chip-impact-med { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+        .ac-chip-impact-high { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
         .ac-muted {
-            color: #6B7280;
+            color: #64748b;
             font-size: 0.86rem;
             margin-top: 0.45rem;
         }
         .ac-risk-title {
-            color: #1F2937;
+            color: #0f172a;
             font-size: 1.05rem;
             font-weight: 700;
             margin-bottom: 0.25rem;
@@ -144,7 +145,7 @@ def render_technical_trace(view: dict) -> None:
 
 
 def main() -> None:
-    user_id = bootstrap_db_and_user()
+    user_id = require_authenticated_user()
     render_sidebar_navigation(current_page="action_center", db_path=str(DB_PATH), user_id=user_id)
     inject_action_center_css()
     render_page_header(

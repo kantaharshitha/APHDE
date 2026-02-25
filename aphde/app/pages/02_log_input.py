@@ -6,8 +6,9 @@ from typing import Any
 
 import streamlit as st
 
+from app.auth_ui import require_authenticated_user
 from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH, bootstrap_db_and_user
+from app.utils import DB_PATH
 from core.data.db import get_connection
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.context_repo import ContextInputRepository
@@ -32,15 +33,15 @@ def inject_log_page_css() -> None:
     st.markdown(
         """
         <style>
-        .log-meta { color: #6B7280; font-size: 0.88rem; }
-        .tile-caption { color: #6B7280; font-size: 0.82rem; line-height: 1.25; }
-        .tile-focus { color: #1F2937; font-weight: 600; font-size: 0.92rem; margin-bottom: 0.22rem; }
+        .log-meta { color: #475569; font-size: 0.88rem; }
+        .tile-caption { color: #64748b; font-size: 0.82rem; line-height: 1.25; }
+        .tile-focus { color: #0f172a; font-weight: 600; font-size: 0.92rem; margin-bottom: 0.22rem; }
         div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
-            background: #4B5563;
-            border: 1px solid #374151;
+            background: #0f172a;
+            border: 1px solid #1e293b;
         }
-        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child { background: #D1D5DB; }
-        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:nth-child(2) { background: #6B7280; }
+        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child { background: #cbd5e1; }
+        div[data-testid="stSlider"] [data-baseweb="slider"] > div > div:nth-child(2) { background: #475569; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -142,7 +143,7 @@ def render_workout_section() -> None:
 def render_context_section(*, latest_context_date: str | None, latest_context_payload: dict[str, Any] | None) -> None:
     with st.expander("Physiological Context (Optional)", expanded=False):
         st.markdown(
-            '<div style="font-size:0.84rem; color:#6B7280; margin-bottom:0.55rem;">'
+            '<div style="font-size:0.84rem; color:#475569; margin-bottom:0.55rem;">'
             "This information helps modulate recovery and risk scoring. Leave blank if not applicable."
             "</div>",
             unsafe_allow_html=True,
@@ -184,7 +185,7 @@ def render_context_section(*, latest_context_date: str | None, latest_context_pa
                 st.caption("0 = no symptoms, 10 = severe symptoms")
 
             st.markdown(
-                '<div style="font-size:0.82rem; color:#065F46; margin-top:0.25rem;">'
+                '<div style="font-size:0.82rem; color:#166534; margin-top:0.25rem;">'
                 "Context will be applied during next evaluation."
                 "</div>",
                 unsafe_allow_html=True,
@@ -284,7 +285,7 @@ def load_snapshot_data(*, user_id: int) -> dict[str, Any]:
 
 
 def main() -> None:
-    user_id = bootstrap_db_and_user()
+    user_id = require_authenticated_user()
     render_sidebar_navigation(current_page="log_input", db_path=str(DB_PATH), user_id=user_id)
     inject_log_page_css()
     init_state()

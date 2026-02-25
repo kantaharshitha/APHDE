@@ -4,7 +4,7 @@
 
 `DomainDefinition` is the injection contract between the domain-agnostic core and domain-specific logic.
 
-It allows APHDE core to operate without knowledge of domain entities such as weight, calories, workouts, or cycle.
+It allows Stratify core to operate without knowledge of domain entities such as weight, calories, workouts, or cycle.
 
 ## Interface
 

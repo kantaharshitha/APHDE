@@ -1,6 +1,6 @@
 # Demo Scenarios
 
-Use these scenarios to present APHDE end-to-end.
+Use these scenarios to present Stratify end-to-end.
 
 ## Scenario 1: Weight Loss Drift + Low Adherence
 

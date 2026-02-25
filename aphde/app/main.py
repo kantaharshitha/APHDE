@@ -4,12 +4,13 @@ from typing import Any
 
 import streamlit as st
 
+from app.auth_ui import require_authenticated_user
 from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH, bootstrap_db_and_user
+from app.utils import DB_PATH
 from core.data.db import get_connection
 from core.data.repositories.goal_repo import GoalRepository
 
-st.set_page_config(page_title="APHDE", layout="wide")
+st.set_page_config(page_title="Stratify", layout="wide")
 
 
 GOAL_DESCRIPTIONS: dict[str, str] = {
@@ -140,13 +141,13 @@ def render_technical_trace(state: dict[str, Any]) -> None:
 
 
 def main() -> None:
-    user_id = bootstrap_db_and_user()
+    user_id = require_authenticated_user()
     render_sidebar_navigation(current_page="main", db_path=str(DB_PATH), user_id=user_id)
     inject_home_css()
     state = load_state(user_id=user_id)
 
     render_page_header(
-        title="Adaptive Personal Health Decision Engine",
+        title="Stratify",
         subtitle="Deterministic, explainable optimization framework.",
     )
     render_active_goal_card(state)

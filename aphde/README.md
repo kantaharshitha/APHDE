@@ -1,6 +1,6 @@
-# Adaptive Personal Health Decision Engine (APHDE)
+# Stratify
 
-APHDE is a deterministic, explainable, versioned optimization framework demonstrated in the health domain.
+Stratify is a deterministic, explainable, versioned optimization framework demonstrated in the health domain.
 
 This is **not** a fitness tracker and **not** an ML system.  
 It is a layered decision architecture focused on:
@@ -12,9 +12,9 @@ It is a layered decision architecture focused on:
 - context modulation
 - governance and reproducibility
 
-## What APHDE Does
+## What Stratify Does
 
-Given structured behavioral logs (weight, calories, workouts, optional context), APHDE:
+Given structured behavioral logs (weight, calories, workouts, optional context), Stratify:
 
 1. Computes domain signals over rolling windows.
 2. Applies goal strategy rules.
@@ -60,7 +60,7 @@ Out of scope:
 - ML prediction models
 - external API integrations
 - wearable integrations
-- authentication and multi-tenant user management
+- multi-organization RBAC and enterprise SSO
 
 ## Project Layout
 
@@ -125,7 +125,7 @@ cd aphde
 2. **Goal Configuration**: select strategy and configure thresholds.
 3. **Log Input**: stage biometrics/training/context and commit once.
 4. **Decision Dashboard**: operational snapshot (alignment, confidence, risk, top recommendation, signals/context summary).
-5. **Action Center**: deterministic “Tomorrow Plan” guidance.
+5. **Action Center**: deterministic "Tomorrow Plan" guidance.
 6. **Insights & Trends**: weekly insights, stagnation alerts, drift detection, and trend charts.
 
 Typical run path:
@@ -203,3 +203,4 @@ If tests fail due to environment mismatch:
 1. Recreate venv.
 2. Reinstall with `-e .[dev]`.
 3. Re-run `pytest -q`.
+

@@ -2,7 +2,7 @@
 
 ## Release
 
-APHDE V5 introduces governance, reproducibility, and observability capabilities while preserving deterministic decision behavior.
+Stratify V5 introduces governance, reproducibility, and observability capabilities while preserving deterministic decision behavior.
 
 ## What Changed
 

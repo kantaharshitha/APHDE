@@ -3,9 +3,10 @@
 import pandas as pd
 import streamlit as st
 
+from app.auth_ui import require_authenticated_user
 from app.services.insights_service import load_insights_view
 from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH, bootstrap_db_and_user
+from app.utils import DB_PATH
 
 st.set_page_config(page_title="Insights & Trends", layout="wide")
 
@@ -15,24 +16,24 @@ def inject_insights_css() -> None:
         """
         <style>
         .it-summary {
-            color: #1F2937;
+            color: #0f172a;
             font-size: 1rem;
             line-height: 1.5;
         }
         .it-card {
-            border: 1px solid #E5E7EB;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
-            background: #FBFCFD;
+            background: #ffffff;
             padding: 0.85rem 0.95rem;
             min-height: 120px;
         }
         .it-label {
-            color: #6B7280;
+            color: #475569;
             font-size: 0.82rem;
             margin-bottom: 0.32rem;
         }
         .it-value {
-            color: #1F2937;
+            color: #0f172a;
             font-size: 1.15rem;
             font-weight: 700;
         }
@@ -43,11 +44,11 @@ def inject_insights_css() -> None:
             font-size: 0.78rem;
             font-weight: 600;
         }
-        .it-chip-good { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-        .it-chip-monitor { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .it-chip-elevated { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .it-chip-good { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .it-chip-monitor { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
+        .it-chip-elevated { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .it-section-note {
-            color: #6B7280;
+            color: #64748b;
             font-size: 0.82rem;
             margin-top: 0.35rem;
         }
@@ -240,7 +241,7 @@ def render_technical_trace(view: dict) -> None:
 
 
 def main() -> None:
-    user_id = bootstrap_db_and_user()
+    user_id = require_authenticated_user()
     render_sidebar_navigation(current_page="insights_trends", db_path=str(DB_PATH), user_id=user_id)
     inject_insights_css()
     render_page_header(

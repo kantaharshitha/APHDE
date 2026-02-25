@@ -1,4 +1,4 @@
-# APHDE UI Data Contracts
+# Stratify UI Data Contracts
 
 This document defines the data bindings used by Streamlit pages. It keeps UI rendering separate from deterministic backend logic.
 
