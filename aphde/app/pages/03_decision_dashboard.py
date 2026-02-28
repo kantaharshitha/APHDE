@@ -2,19 +2,19 @@ from __future__ import annotations
 
 import streamlit as st
 
-from aphde.app.auth_ui import require_authenticated_user
-from aphde.app.components.dashboard_sections import (
+from ..auth_ui import require_authenticated_user
+from ..components.dashboard_sections import (
     render_dashboard_operational_insights,
     inject_dashboard_css,
     render_metric_row,
     render_operational_view,
 )
-from aphde.app.ui.layout import render_page_header, render_sidebar_navigation
-from aphde.app.services.dashboard_service import (
+from ..ui.layout import render_page_header, render_sidebar_navigation
+from ..services.dashboard_service import (
     trigger_evaluation,
 )
-from aphde.app.services.ui_data_service import load_dashboard_view
-from aphde.app.utils import DB_PATH
+from ..services.ui_data_service import load_dashboard_view
+from ..utils import DB_PATH
 
 
 user_id = require_authenticated_user()
@@ -86,4 +86,5 @@ with st.expander("Technical Trace (Advanced)"):
     st.json(confidence_breakdown or {})
     st.write("Context notes")
     st.json(context_notes or [])
+
 

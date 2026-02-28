@@ -3,10 +3,10 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from aphde.app.auth_ui import require_authenticated_user
-from aphde.app.services.insights_service import load_insights_view
-from aphde.app.ui.layout import render_page_header, render_sidebar_navigation
-from aphde.app.utils import DB_PATH
+from ..auth_ui import require_authenticated_user
+from ..services.insights_service import load_insights_view
+from ..ui.layout import render_page_header, render_sidebar_navigation
+from ..utils import DB_PATH
 
 st.set_page_config(page_title="Insights & Trends", layout="wide")
 
@@ -279,5 +279,6 @@ def main() -> None:
 
 
 main()
+
 
 
