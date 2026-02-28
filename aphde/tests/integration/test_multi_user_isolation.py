@@ -4,7 +4,7 @@ from datetime import date
 import json
 from pathlib import Path
 
-from app.services.dashboard_service import load_dashboard_data
+from aphde.app.services.dashboard_service import load_dashboard_data
 from core.data.db import get_connection, init_db
 from core.data.migrations.migrate_v2_confidence import run_migration as run_v2_migration
 from core.data.migrations.migrate_v3_context import run_migration as run_v3_migration
@@ -129,3 +129,4 @@ def test_determinism_baseline_is_isolated_per_user(tmp_path: Path) -> None:
     # User scoping guarantee: even with identical logs, input signature differs
     # per user identity and never resolves to another user's baseline.
     assert a1["input_signature_hash"] != b1["input_signature_hash"]
+

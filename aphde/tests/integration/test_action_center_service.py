@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.services.action_center_service import load_action_center_view
+from aphde.app.services.action_center_service import load_action_center_view
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.goal_repo import GoalRepository
@@ -66,3 +66,4 @@ def test_action_center_builds_tomorrow_plan_after_evaluation(tmp_path) -> None:
     assert "confidence" in plan
     assert "severity" in plan
     assert "expected_impact" in plan
+

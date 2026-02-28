@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.services.insights_service import load_insights_view
+from aphde.app.services.insights_service import load_insights_view
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.goal_repo import GoalRepository
@@ -62,3 +62,4 @@ def test_insights_service_returns_expected_contract(tmp_path) -> None:
     assert "recovery" in trends
     assert "compliance" in trends
     assert "overload" in trends
+

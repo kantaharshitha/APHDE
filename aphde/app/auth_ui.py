@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app.ui.layout import render_page_header
-from app.utils import DB_PATH, bootstrap_db
+from aphde.app.ui.layout import render_page_header
+from aphde.app.utils import DB_PATH, bootstrap_db
 from core.auth.service import AuthError, AuthService
 from core.auth.session import (
     clear_auth_session,
@@ -105,3 +105,4 @@ def require_authenticated_user() -> int:
 
     render_auth_gate()
     st.stop()
+

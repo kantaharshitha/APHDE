@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.dashboard_service import (
+from aphde.app.services.dashboard_service import (
     build_diff_payload,
     build_governance_view,
     build_history_payload,
@@ -51,3 +51,4 @@ def load_dashboard_view(*, user_id: int, db_path: str, recent_limit: int = 25) -
 
 def load_run_diff(*, recent_runs: list[dict[str, Any]], run_a_id: int, run_b_id: int) -> dict[str, Any]:
     return build_diff_payload(recent_runs=recent_runs, run_a_id=run_a_id, run_b_id=run_b_id)
+

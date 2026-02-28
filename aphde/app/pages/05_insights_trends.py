@@ -1,12 +1,12 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
 
-from app.auth_ui import require_authenticated_user
-from app.services.insights_service import load_insights_view
-from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH
+from aphde.app.auth_ui import require_authenticated_user
+from aphde.app.services.insights_service import load_insights_view
+from aphde.app.ui.layout import render_page_header, render_sidebar_navigation
+from aphde.app.utils import DB_PATH
 
 st.set_page_config(page_title="Insights & Trends", layout="wide")
 
@@ -109,8 +109,8 @@ def render_weekly_snapshot(summary: dict) -> None:
         st.markdown("### Weekly Snapshot")
         recovery_shift = str(summary.get("recovery_shift", "flat"))
         overload_progress = str(summary.get("overload_progress", "flat"))
-        recovery_label = "↓ Decreasing" if recovery_shift == "down" else ("↑ Increasing" if recovery_shift == "up" else "→ Stable")
-        overload_label = "↑ Increasing" if overload_progress == "up" else ("↓ Decreasing" if overload_progress == "down" else "→ Stable")
+        recovery_label = "? Decreasing" if recovery_shift == "down" else ("? Increasing" if recovery_shift == "up" else "? Stable")
+        overload_label = "? Increasing" if overload_progress == "up" else ("? Decreasing" if overload_progress == "down" else "? Stable")
 
         c1, c2, c3, c4 = st.columns(4)
         c1.markdown(
@@ -279,4 +279,5 @@ def main() -> None:
 
 
 main()
+
 

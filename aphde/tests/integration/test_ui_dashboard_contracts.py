@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.services.ui_data_service import load_dashboard_view, load_run_diff
+from aphde.app.services.ui_data_service import load_dashboard_view, load_run_diff
 from core.data.db import get_connection, init_db
 from core.data.repositories.calorie_repo import CalorieLogRepository
 from core.data.repositories.goal_repo import GoalRepository
@@ -94,3 +94,4 @@ def test_load_dashboard_view_and_diff_have_expected_ui_contract(tmp_path) -> Non
     assert "score_delta" in diff
     assert "recommendation_changes" in diff
     assert "context_changes" in diff
+

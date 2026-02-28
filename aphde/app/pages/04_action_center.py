@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app.auth_ui import require_authenticated_user
-from app.services.action_center_service import load_action_center_view
-from app.ui.layout import render_page_header, render_sidebar_navigation
-from app.utils import DB_PATH
+from aphde.app.auth_ui import require_authenticated_user
+from aphde.app.services.action_center_service import load_action_center_view
+from aphde.app.ui.layout import render_page_header, render_sidebar_navigation
+from aphde.app.utils import DB_PATH
 
 st.set_page_config(page_title="Action Center", layout="wide")
 
@@ -176,3 +176,4 @@ def main() -> None:
 
 
 main()
+
