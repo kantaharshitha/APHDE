@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .dashboard_service import load_dashboard_data
+from aphde.app.services.dashboard_service import load_dashboard_data
 from core.data.db import get_connection
 from core.data.repositories.workout_repo import WorkoutLogRepository
 from core.guidance.tomorrow_plan import build_tomorrow_plan
@@ -117,5 +117,6 @@ def load_action_center_view(*, user_id: int, db_path: str, recent_limit: int = 2
         "why_this_action": explainability,
         "recent_runs": recent_runs,
     }
+
 
 

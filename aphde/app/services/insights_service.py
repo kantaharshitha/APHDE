@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .dashboard_service import load_dashboard_data
+from aphde.app.services.dashboard_service import load_dashboard_data
 from core.data.db import get_connection
 from core.data.repositories.weight_repo import WeightLogRepository
 from core.insights.stagnation import detect_stagnation_alerts
@@ -81,5 +81,6 @@ def load_insights_view(*, user_id: int, db_path: str, recent_limit: int = 42) ->
         "trends": trends,
         "recent_runs": recent_runs,
     }
+
 
 
