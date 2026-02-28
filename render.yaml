@@ -2,7 +2,7 @@ services:
   - type: web
     name: stratify
     runtime: python
-    buildCommand: pip install -e aphde
+    buildCommand: pip install -e .
     startCommand: PYTHONPATH=/opt/render/project/src streamlit run aphde/app/main.py --server.address 0.0.0.0 --server.port $PORT
     envVars:
       - key: PYTHONPATH
