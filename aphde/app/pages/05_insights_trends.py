@@ -109,8 +109,8 @@ def render_weekly_snapshot(summary: dict) -> None:
         st.markdown("### Weekly Snapshot")
         recovery_shift = str(summary.get("recovery_shift", "flat"))
         overload_progress = str(summary.get("overload_progress", "flat"))
-        recovery_label = "? Decreasing" if recovery_shift == "down" else ("? Increasing" if recovery_shift == "up" else "? Stable")
-        overload_label = "? Increasing" if overload_progress == "up" else ("? Decreasing" if overload_progress == "down" else "? Stable")
+        recovery_label = "Decreasing" if recovery_shift == "down" else ("Increasing" if recovery_shift == "up" else "Stable")
+        overload_label = "Increasing" if overload_progress == "up" else ("Decreasing" if overload_progress == "down" else "Stable")
 
         c1, c2, c3, c4 = st.columns(4)
         c1.markdown(
