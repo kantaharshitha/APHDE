@@ -1,9 +1,80 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Callable
 
 from core.engine.contracts import SignalBundleLike, StrategyLike
 from core.engine.pipeline import ContextComputation, EngineRunOutput
+from core.models.entities import Recommendation
+from core.models.enums import RecommendationCategory
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, value))
+
+
+def _maintenance_fallback_candidates(*, urgency: float) -> list[Recommendation]:
+    base_conf = _clamp01(0.58 + (0.22 * (1.0 - urgency)))
+    return [
+        Recommendation(
+            rec_id="maintain_progression",
+            priority=99,
+            category=RecommendationCategory.HABIT,
+            action="Maintain current progression with consistent session execution.",
+            expected_effect="Stabilizes short-window variance and improves next-run reliability.",
+            reason_codes=["MAINTENANCE_FALLBACK"],
+            confidence=round(base_conf, 4),
+        ),
+        Recommendation(
+            rec_id="incremental_overload",
+            priority=99,
+            category=RecommendationCategory.TRAINING,
+            action="Apply a small incremental overload only if recovery remains stable.",
+            expected_effect="Supports controlled progression without abrupt fatigue spikes.",
+            reason_codes=["MAINTENANCE_FALLBACK"],
+            confidence=round(_clamp01(base_conf - 0.03), 4),
+        ),
+        Recommendation(
+            rec_id="calorie_target_band",
+            priority=99,
+            category=RecommendationCategory.NUTRITION,
+            action="Keep calorie intake within the configured target band.",
+            expected_effect="Reduces behavioral drift and maintains signal consistency.",
+            reason_codes=["MAINTENANCE_FALLBACK"],
+            confidence=round(_clamp01(base_conf - 0.05), 4),
+        ),
+        Recommendation(
+            rec_id="recovery_consistency",
+            priority=99,
+            category=RecommendationCategory.RECOVERY,
+            action="Preserve recovery consistency across sleep and low-intensity sessions.",
+            expected_effect="Supports resilience and lowers volatility in recovery signals.",
+            reason_codes=["MAINTENANCE_FALLBACK"],
+            confidence=round(_clamp01(base_conf - 0.02), 4),
+        ),
+    ]
+
+
+def _ensure_minimum_recommendations(
+    *,
+    ranked_recommendations: list[Recommendation],
+    urgency: float,
+    recommendation_ranker: Callable[[list[Recommendation], float], list[Recommendation]],
+) -> list[Recommendation]:
+    if len(ranked_recommendations) >= 2:
+        return ranked_recommendations
+
+    fallback_candidates = _maintenance_fallback_candidates(urgency=urgency)
+
+    if len(ranked_recommendations) == 1:
+        existing_ids = {item.rec_id for item in ranked_recommendations}
+        fallback = next((item for item in fallback_candidates if item.rec_id not in existing_ids), None)
+        if fallback is None:
+            return ranked_recommendations
+        return ranked_recommendations + [replace(fallback, priority=2)]
+
+    fallback_ranked = recommendation_ranker(fallback_candidates[:2], urgency=urgency)
+    return fallback_ranked
 
 
 def run_engine_pipeline(
@@ -20,7 +91,7 @@ def run_engine_pipeline(
     required_observation_count: int,
     context_adapter: Callable[[StrategyLike, SignalBundleLike, dict[str, Any], dict[str, Any], dict[str, Any] | None], ContextComputation],
     additional_risk_detector: Callable[[SignalBundleLike], list[str]],
-    recommendation_ranker: Callable[[list[Any], float], list[Any]],
+    recommendation_ranker: Callable[[list[Recommendation], float], list[Recommendation]],
     recommendation_serializer: Callable[[list[Any]], list[dict[str, Any]]],
     score_breakdown_builder: Callable[[float, int, int], dict[str, float]],
     penalty_extractor: Callable[[dict[str, float]], dict[str, float]],
@@ -37,6 +108,11 @@ def run_engine_pipeline(
 
     base_recommendations = strategy.recommend(context_state.evaluation)
     ranked = recommendation_ranker(base_recommendations, context_state.urgency)
+    ranked = _ensure_minimum_recommendations(
+        ranked_recommendations=ranked,
+        urgency=context_state.urgency,
+        recommendation_ranker=recommendation_ranker,
+    )
     recommendation_dicts = recommendation_serializer(ranked)
 
     sufficiency = signals.sufficiency or {}
